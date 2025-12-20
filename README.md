@@ -1,4 +1,4 @@
-#🌍 AirQuality Mapping Web App
+🌍 AirQuality Mapping Web App
 
 Visualizing the air we breathe.
 
