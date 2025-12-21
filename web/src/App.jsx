@@ -1,4 +1,4 @@
-// Update: Mobile Menu, Ranking, Health Card - 22 Dec 2025
+// Version 1.1: Added Mobile Menu and Health Advisory
 import React, { useState, useEffect, useRef } from 'react';
 import { Layout, Typography, Menu, Spin, Space, notification, Card, Row, Col, Badge, Drawer, Button } from 'antd';
 import { DashboardOutlined, TableOutlined, GlobalOutlined, MenuOutlined, EnvironmentOutlined, CheckCircleOutlined, HomeOutlined } from '@ant-design/icons';
