@@ -18,8 +18,8 @@ const TableView = ({ data }) => {
             dataIndex: 'deviceId',
             key: 'deviceId',
             render: (text) => {
-                if (text === 'ESP32_01') return 'อาคารเรียนรวม 1';
-                if (text === 'ESP32_02') return 'อาคารบรรณสาร';
+                if (text === 'ESP32_01') return 'อาคารบรรณสาร';
+                if (text === 'ESP32_02') return 'อาคารเรียนรวม 1';
                 return text;
             }
         },

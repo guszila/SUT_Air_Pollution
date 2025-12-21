@@ -76,25 +76,26 @@ const AirDashboard = () => {
 
       const parsedData = dataRows.map(row => {
         const cols = row.split(',');
-        // Device ID is in Column 3 (Index 3) based on CSV inspection
-        const deviceId = cols[3].trim();
+        // Device ID is in Column 3 (Index 2) based on CSV inspection
+        const deviceId = cols[2].trim();
 
         return {
           date: cols[0],
           time: cols[1],
           deviceId: deviceId,
-          pm25: parseFloat(cols[5]),
-          pm10: parseFloat(cols[6]),
-          temp: parseFloat(cols[7]),
-          humidity: parseFloat(cols[8]),
+          pm25: parseFloat(cols[4]),
+          pm10: parseFloat(cols[5]),
+          temp: parseFloat(cols[6]),
+          humidity: parseFloat(cols[7]),
         };
       });
 
       setHistoryData(parsedData);
 
       // Filter Data by Device Name
-      const d1Data = parsedData.filter(d => d.deviceId === 'A_Learning_Building_1');
-      const d2Data = parsedData.filter(d => d.deviceId === 'B_Library_Building');
+      // Filter Data by Device Name
+      const d1Data = parsedData.filter(d => d.deviceId === 'A_Learning_Building_1' || d.deviceId === 'ESP32_02');
+      const d2Data = parsedData.filter(d => d.deviceId === 'B_Library_Building' || d.deviceId === 'ESP32_01');
 
       // --- Calculate Daily Averages for Grouped Chart ---
       const dailyMap = {};

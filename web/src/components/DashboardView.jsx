@@ -2,6 +2,9 @@ import React from 'react';
 import { Card, Row, Col, Typography, Progress, Divider } from 'antd';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, LabelList } from 'recharts';
 
+import { EnvironmentOutlined } from '@ant-design/icons';
+import { FireOutlined, CloudOutlined } from '@ant-design/icons';
+
 const { Title, Text } = Typography;
 
 const StatusSection = ({ title, data }) => {
@@ -48,7 +51,10 @@ const StatusSection = ({ title, data }) => {
                 {/* Temperature Card */}
                 <Col xs={24} sm={8}>
                     <Card hoverable bordered={false} style={{ textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: 'transparent', boxShadow: 'none' }}>
-                        <Title level={5} style={{ fontFamily: 'Kanit, sans-serif' }}>อุณหภูมิ (Temp)</Title>
+                        <Title level={5} style={{ fontFamily: 'Kanit, sans-serif' }}>
+                            <FireOutlined style={{ color: '#ff4d4f', marginRight: '8px' }} />
+                            อุณหภูมิ (Temp)
+                        </Title>
                         <div style={{ fontSize: '40px', fontWeight: 'bold', color: '#1890ff', margin: '20px 0', fontFamily: 'Kanit, sans-serif' }}>
                             {temp !== undefined ? temp : '-'} °C
                         </div>
@@ -59,7 +65,10 @@ const StatusSection = ({ title, data }) => {
                 {/* Humidity Card */}
                 <Col xs={24} sm={8}>
                     <Card hoverable bordered={false} style={{ textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: 'transparent', boxShadow: 'none' }}>
-                        <Title level={5} style={{ fontFamily: 'Kanit, sans-serif' }}>ความชื้น (Humidity)</Title>
+                        <Title level={5} style={{ fontFamily: 'Kanit, sans-serif' }}>
+                            <CloudOutlined style={{ color: '#13c2c2', marginRight: '8px' }} />
+                            ความชื้น (Humidity)
+                        </Title>
                         <div style={{ fontSize: '40px', fontWeight: 'bold', color: '#13c2c2', margin: '20px 0' }}>
                             {humidity !== undefined ? humidity : '-'} %
                         </div>
@@ -108,8 +117,8 @@ const DashboardView = ({ device1, device2, historyData, dailyStats }) => {
                                     return (
                                         <div style={{ backgroundColor: '#fff', padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }}>
                                             <p style={{ margin: 0, fontWeight: 'bold' }}>{label}</p>
-                                            <p style={{ margin: 0, color: data.deviceId === 'A_Learning_Building_1' ? '#1890ff' : '#52c41a' }}>
-                                                {data.deviceId === 'A_Learning_Building_1' ? 'อาคารเรียนรวม 1' : 'อาคารบรรณสาร'}: {data.pm25} µg/m³
+                                            <p style={{ margin: 0, color: (data.deviceId === 'A_Learning_Building_1' || data.deviceId === 'ESP32_02') ? '#1890ff' : '#52c41a' }}>
+                                                {(data.deviceId === 'A_Learning_Building_1' || data.deviceId === 'ESP32_02') ? 'อาคารเรียนรวม 1' : 'อาคารบรรณสาร'}: {data.pm25} µg/m³
                                             </p>
                                         </div>
                                     );
