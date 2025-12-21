@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Tooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Button, Modal, Descriptions, Tag, Typography, Card } from 'antd';
@@ -28,14 +28,16 @@ const AirMap = ({ device1, device2, dailyStats }) => {
 
     const devices = [
         {
-            id: 'ESP32_01',
+            id: 'A_Learning_Building_1',
             name: 'อาคารเรียนรวม 1 (Learning Bldg 1)',
+            thaiName: 'อาคารเรียนรวม 1',
             position: [14.881556, 102.016861],
             data: device1
         },
         {
-            id: 'ESP32_02',
+            id: 'B_Library_Building',
             name: 'อาคารบรรณสาร (Library)',
+            thaiName: 'อาคารบรรณสาร',
             position: [14.878944, 102.016306],
             data: device2
         }
@@ -63,8 +65,10 @@ const AirMap = ({ device1, device2, dailyStats }) => {
     };
 
     const openDetail = (device) => {
-        setSelectedDevice(device);
-        setIsModalVisible(true);
+        if (device.data) {
+            setSelectedDevice(device);
+            setIsModalVisible(true);
+        }
     };
 
     const handleCancel = () => {
@@ -86,30 +90,50 @@ const AirMap = ({ device1, device2, dailyStats }) => {
                         const pm25 = device.data ? device.data.pm25 : 0;
                         const color = getStatusColor(pm25);
 
+                        const customIcon = L.divIcon({
+                            className: 'custom-marker',
+                            html: `
+                                <div style="
+                                    background-color: ${color};
+                                    width: 40px;
+                                    height: 40px;
+                                    border-radius: 50%;
+                                    display: flex;
+                                    justify-content: center;
+                                    align-items: center;
+                                    color: white;
+                                    font-weight: bold;
+                                    font-family: 'Kanit', sans-serif;
+                                    font-size: 14px;
+                                    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+                                    border: 2px solid white;
+                                ">
+                                    ${pm25}
+                                </div>
+                            `,
+                            iconSize: [40, 40],
+                            iconAnchor: [20, 20],
+                            popupAnchor: [0, -20]
+                        });
+
                         return (
-                            <React.Fragment key={index}>
-                                <Marker
-                                    position={device.position}
-                                    eventHandlers={{ click: () => openDetail(device) }}
+                            <Marker
+                                key={index}
+                                position={device.position}
+                                icon={customIcon}
+                                eventHandlers={{ click: () => openDetail(device) }}
+                            >
+                                <Tooltip
+                                    direction="top"
+                                    offset={[0, -20]}
+                                    opacity={1}
+                                    sticky={true}
                                 >
-                                    <Tooltip
-                                        direction="top"
-                                        offset={[0, -10]}
-                                        opacity={1}
-                                        sticky={true}
-                                    >
-                                        <span style={{ fontFamily: 'Kanit, sans-serif', fontSize: '14px' }}>
-                                            {device.name}
-                                        </span>
-                                    </Tooltip>
-                                </Marker>
-                                <CircleMarker
-                                    center={device.position}
-                                    pathOptions={{ color: color, fillColor: color, fillOpacity: 0.7 }}
-                                    radius={20}
-                                    eventHandlers={{ click: () => openDetail(device) }}
-                                />
-                            </React.Fragment>
+                                    <span style={{ fontFamily: 'Kanit, sans-serif', fontSize: '14px' }}>
+                                        {device.thaiName}
+                                    </span>
+                                </Tooltip>
+                            </Marker>
                         );
                     })}
                 </MapContainer>
@@ -118,9 +142,12 @@ const AirMap = ({ device1, device2, dailyStats }) => {
             {/* Detail Modal */}
             <Modal
                 title={
-                    <div style={{ fontFamily: 'Kanit, sans-serif' }}>
+                    <div style={{ fontFamily: 'Kanit, sans-serif', display: 'flex', alignItems: 'center' }}>
                         <EnvironmentOutlined style={{ marginRight: 8, color: '#1890ff' }} />
-                        {selectedDevice?.name}
+                        <span style={{ fontSize: '18px' }}>{selectedDevice?.thaiName}</span>
+                        {selectedDevice && (
+                            <Tag color="success" style={{ marginLeft: '10px' }}>สถานะอุปกรณ์: ออนไลน์</Tag>
+                        )}
                     </div>
                 }
                 open={isModalVisible}
@@ -159,7 +186,7 @@ const AirMap = ({ device1, device2, dailyStats }) => {
                             <Descriptions.Item label="ความชื้น (Humidity)">
                                 <b>{selectedDevice.data.humidity}</b> %
                             </Descriptions.Item>
-                            <Descriptions.Item label="ข้อแนะนำ (Recommendation)">
+                            <Descriptions.Item label="ข้อแนะนำ">
                                 <span style={{ color: getStatusColor(selectedDevice.data.pm25) }}>
                                     {getRecommendation(selectedDevice.data.pm25)}
                                 </span>
@@ -171,7 +198,7 @@ const AirMap = ({ device1, device2, dailyStats }) => {
                     </div>
                 ) : (
                     <div style={{ textAlign: 'center', padding: '20px', fontFamily: 'Kanit, sans-serif' }}>
-                        <p>ไม่พบข้อมูล (No Data)</p>
+                        <p>กำลังโหลดข้อมูล...</p>
                     </div>
                 )}
             </Modal>

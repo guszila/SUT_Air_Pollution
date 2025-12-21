@@ -92,40 +92,52 @@ const AirDashboard = () => {
 
       setHistoryData(parsedData);
 
-      // --- Calculate Daily Averages (Last 7 Days) ---
+      // Filter Data by Device Name
+      const d1Data = parsedData.filter(d => d.deviceId === 'A_Learning_Building_1');
+      const d2Data = parsedData.filter(d => d.deviceId === 'B_Library_Building');
+
+      // --- Calculate Daily Averages for Grouped Chart ---
       const dailyMap = {};
-      parsedData.forEach(item => {
-        // Parse dd/mm/yyyy to yyyy-mm-dd for sorting/grouping
-        const parts = item.date.split('/');
-        // Assuming date format is dd/mm/yyyy
-        if (parts.length === 3) {
-          const dateKey = `${parts[2]}-${parts[1]}-${parts[0]}`; // yyyy-mm-dd
-          if (!dailyMap[dateKey]) {
-            dailyMap[dateKey] = { sum: 0, count: 0, date: item.date };
+
+      // Helper to process data
+      const processForDaily = (data, keyPrefix) => {
+        data.forEach(item => {
+          const parts = item.date.split('/');
+          if (parts.length === 3) {
+            const dateKey = `${parts[2]}-${parts[1]}-${parts[0]}`; // yyyy-mm-dd
+            if (!dailyMap[dateKey]) {
+              dailyMap[dateKey] = { date: item.date, sumA: 0, countA: 0, sumB: 0, countB: 0 };
+            }
+            if (keyPrefix === 'A') {
+              dailyMap[dateKey].sumA += item.pm25;
+              dailyMap[dateKey].countA += 1;
+            } else {
+              dailyMap[dateKey].sumB += item.pm25;
+              dailyMap[dateKey].countB += 1;
+            }
           }
-          dailyMap[dateKey].sum += item.pm25;
-          dailyMap[dateKey].count += 1;
-        }
-      });
+        });
+      };
+
+      processForDaily(d1Data, 'A');
+      processForDaily(d2Data, 'B');
 
       const dailyStatsArray = Object.keys(dailyMap).sort().slice(-7).map(key => {
-        const avg = (dailyMap[key].sum / dailyMap[key].count).toFixed(0); // Round to integer
-        // Convert date to Thai format Short: 20 ธ.ค.
+        const entry = dailyMap[key];
+        const avgA = entry.countA ? (entry.sumA / entry.countA).toFixed(0) : 0;
+        const avgB = entry.countB ? (entry.sumB / entry.countB).toFixed(0) : 0;
+
         const dateObj = new Date(key);
         const thaiDate = dateObj.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
 
         return {
           date: thaiDate,
-          pm25: parseInt(avg),
+          pm25_A: parseInt(avgA),
+          pm25_B: parseInt(avgB),
           fullDate: key
         };
       });
       setDailyStats(dailyStatsArray);
-
-
-      // Filter Latest Data for each Device
-      const d1Data = parsedData.filter(d => d.deviceId === 'ESP32_01');
-      const d2Data = parsedData.filter(d => d.deviceId === 'ESP32_02');
 
       const latestD1 = d1Data.length > 0 ? d1Data[d1Data.length - 1] : null;
       const latestD2 = d2Data.length > 0 ? d2Data[d2Data.length - 1] : null;
@@ -164,7 +176,7 @@ const AirDashboard = () => {
 
     switch (currentView) {
       case 'dashboard':
-        return <DashboardView latestData={device1 || {}} historyData={historyData} dailyStats={dailyStats} />;
+        return <DashboardView device1={device1} device2={device2} historyData={historyData} dailyStats={dailyStats} />;
       case 'table':
         return <TableView data={historyData} />;
       case 'map':
@@ -174,7 +186,7 @@ const AirDashboard = () => {
           dailyStats={dailyStats}
         />;
       default:
-        return <DashboardView latestData={device1 || {}} historyData={historyData} dailyStats={dailyStats} />;
+        return <DashboardView device1={device1} device2={device2} historyData={historyData} dailyStats={dailyStats} />;
     }
   };
 
