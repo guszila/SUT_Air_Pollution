@@ -1,4 +1,4 @@
-// Version 1.1: Added Mobile Menu and Health Advisory
+// Build update: 22/12/2025
 import React, { useState, useEffect, useRef } from 'react';
 import { Layout, Typography, Menu, Spin, Space, notification, Card, Row, Col, Badge, Drawer, Button } from 'antd';
 import { DashboardOutlined, TableOutlined, GlobalOutlined, MenuOutlined, EnvironmentOutlined, CheckCircleOutlined, HomeOutlined } from '@ant-design/icons';
