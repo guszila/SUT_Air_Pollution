@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Layout, Typography, Menu, Spin, Space, notification, Card, Row, Col, Badge } from 'antd';
-import { DashboardOutlined, TableOutlined, GlobalOutlined, EnvironmentOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { Layout, Typography, Menu, Spin, Space, notification, Card, Row, Col, Badge, Drawer, Button } from 'antd';
+import { DashboardOutlined, TableOutlined, GlobalOutlined, MenuOutlined, EnvironmentOutlined, CheckCircleOutlined, HomeOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import DashboardView from './components/DashboardView';
 import TableView from './components/TableView';
@@ -11,7 +11,10 @@ const { Title, Text } = Typography;
 
 const AirDashboard = () => {
   const [loading, setLoading] = useState(true);
-  const [currentView, setCurrentView] = useState('dashboard');
+  const [currentView, setCurrentView] = useState('home');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showHeader, setShowHeader] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Data States
@@ -19,16 +22,12 @@ const AirDashboard = () => {
   const [device1, setDevice1] = useState(null); // ESP32_01 (Learning Bldg 1)
   const [device2, setDevice2] = useState(null); // ESP32_02 (Library)
   const [dailyStats, setDailyStats] = useState([]);
+  const [timeSeriesData, setTimeSeriesData] = useState([]);
+  const [averagePM25, setAveragePM25] = useState(0);
   const [bestLocation, setBestLocation] = useState(null);
 
   // Alert Cooldown Ref
   const lastAlertTime = useRef(0);
-
-  // Clock Timer
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   // Request Notification Permission
   useEffect(() => {
@@ -146,6 +145,50 @@ const AirDashboard = () => {
       setDevice1(latestD1);
       setDevice2(latestD2);
 
+      // --- Process Time Series Data (Merge by Time) ---
+      // We need to create a map of time -> { time, pm25_A, pm25_B }
+      const timeMap = {};
+
+      // Helper to populate map
+      const addToMap = (data, key) => {
+        data.forEach(item => {
+          // Create a unique key for sorting: "YYYYMMDDHHMM" could work, or just use the time string if dates match.
+          // However, to be safe across days, we should use full date time.
+          // Format of date: "DD/MM/YYYY", time: "HH:mm:ss"
+          // Let's create a sortable timestamp
+          const dateParts = item.date.split('/');
+          const timeParts = item.time.split(':');
+          if (dateParts.length === 3 && timeParts.length >= 2) {
+            const d = new Date(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}T${item.time}`);
+            const timestamp = d.getTime();
+            const timeLabel = `${timeParts[0]}:${timeParts[1]}`; // HH:mm
+
+            if (!timeMap[timestamp]) {
+              timeMap[timestamp] = { timestamp, time: timeLabel, fullDate: item.date };
+            }
+            if (key === 'A') timeMap[timestamp].pm25_A = item.pm25;
+            if (key === 'B') timeMap[timestamp].pm25_B = item.pm25;
+          }
+        });
+      };
+
+      addToMap(d1Data, 'A');
+      addToMap(d2Data, 'B');
+
+      // Convert to array and sort
+      const sortedTimeSeries = Object.values(timeMap)
+        .sort((a, b) => a.timestamp - b.timestamp)
+        .slice(-50); // Keep last 50 points
+
+      setTimeSeriesData(sortedTimeSeries);
+
+      // Calculate Average PM2.5 for Recommendation
+      let sumPM25 = 0;
+      let countPM25 = 0;
+      if (latestD1) { sumPM25 += latestD1.pm25; countPM25++; }
+      if (latestD2) { sumPM25 += latestD2.pm25; countPM25++; }
+      setAveragePM25(countPM25 > 0 ? (sumPM25 / countPM25).toFixed(1) : 0);
+
       // Determine Best Air Quality
       if (latestD1 && latestD2) {
         if (latestD1.pm25 < latestD2.pm25) {
@@ -168,16 +211,43 @@ const AirDashboard = () => {
 
   useEffect(() => {
     fetchAirQuality();
-    const interval = setInterval(fetchAirQuality, 30000);
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchAirQuality, 60000); // Update every minute
+    const timeInterval = setInterval(() => setCurrentTime(new Date()), 1000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(timeInterval);
+    };
   }, []);
+
+  // Scroll Handler for Hide/Show Header
+  useEffect(() => {
+    const handleScroll = () => {
+      if (typeof window !== 'undefined') {
+        if (window.scrollY > lastScrollY && window.scrollY > 100) { // Scroll Down
+          setShowHeader(false);
+        } else { // Scroll Up
+          setShowHeader(true);
+        }
+        setLastScrollY(window.scrollY);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [lastScrollY]);
 
   const renderContent = () => {
     if (loading) return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />;
 
     switch (currentView) {
+      case 'home':
+        return <DashboardView mode="home" device1={device1} device2={device2} historyData={historyData} dailyStats={dailyStats} averagePM25={averagePM25} timeSeriesData={timeSeriesData} />;
       case 'dashboard':
-        return <DashboardView device1={device1} device2={device2} historyData={historyData} dailyStats={dailyStats} />;
+        return <DashboardView mode="dashboard" device1={device1} device2={device2} timeSeriesData={timeSeriesData} averagePM25={averagePM25} dailyStats={dailyStats} />;
       case 'table':
         return <TableView data={historyData} />;
       case 'map':
@@ -187,30 +257,46 @@ const AirDashboard = () => {
           dailyStats={dailyStats}
         />;
       default:
-        return <DashboardView device1={device1} device2={device2} historyData={historyData} dailyStats={dailyStats} />;
+        return <DashboardView mode="home" device1={device1} device2={device2} historyData={historyData} dailyStats={dailyStats} />;
     }
   };
 
   const navItems = [
-    { key: 'dashboard', icon: <DashboardOutlined />, label: 'แดชบอร์ด' },
-    { key: 'table', icon: <TableOutlined />, label: 'ตารางข้อมูล' },
-    { key: 'map', icon: <GlobalOutlined />, label: 'แผนที่' },
+    { label: 'Home', key: 'home', icon: <HomeOutlined /> },
+    { label: 'Dashboard', key: 'dashboard', icon: <DashboardOutlined /> },
+    { key: 'table', icon: <TableOutlined />, label: 'Table' },
+    { key: 'map', icon: <GlobalOutlined />, label: 'Map' },
   ];
 
   return (
     <Layout style={{ minHeight: '100vh', fontFamily: 'Kanit, sans-serif' }}>
-      <Header style={{ position: 'fixed', zIndex: 1, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+      <Header className="glass-header" style={{
+        position: 'fixed',
+        zIndex: 10,
+        width: '100%',
+        top: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 16px',
+        transition: 'transform 0.3s ease-in-out',
+        transform: showHeader ? 'translateY(0)' : 'translateY(-100%)'
+      }}>
+        <div
+          className="clickable-brand"
+          style={{ display: 'flex', alignItems: 'center' }}
+          onClick={() => setCurrentView('home')}
+        >
           <div style={{
             width: '40px',
             height: '40px',
-            background: 'rgba(255, 255, 255, 0.2)',
+            background: 'white',
             marginRight: '12px',
             borderRadius: '5px',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            color: 'white',
+            color: '#f37021',
             fontWeight: 'bold',
             flexShrink: 0
           }}>
@@ -221,22 +307,56 @@ const AirDashboard = () => {
           </Title>
         </div>
 
-        <Menu
-          theme="dark"
-          mode="horizontal"
-          defaultSelectedKeys={['dashboard']}
-          items={navItems}
-          onSelect={({ key }) => setCurrentView(key)}
-          style={{ flex: 1, minWidth: 0, justifyContent: 'flex-end', borderBottom: 'none', fontFamily: 'Kanit, sans-serif' }}
-          disabledOverflow={true}
-        />
+        {/* Desktop Menu */}
+        <div className="desktop-visible" style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'flex-end' }}>
+          <Menu
+            theme="dark"
+            mode="horizontal"
+            className="transparent-menu"
+            selectedKeys={[currentView]}
+            items={navItems}
+            onSelect={({ key }) => setCurrentView(key)}
+            style={{ width: '100%', justifyContent: 'flex-end', borderBottom: 'none', fontFamily: 'Kanit, sans-serif' }}
+            disabledOverflow={true}
+          />
+        </div>
+
+        {/* Mobile Hamburger Button */}
+        <div className="mobile-visible">
+          <Button
+            type="primary"
+            icon={<MenuOutlined />}
+            onClick={() => setMobileMenuOpen(true)}
+            style={{ background: 'transparent', border: 'none', fontSize: '18px' }}
+          />
+        </div>
 
         <div style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginLeft: '16px', whiteSpace: 'nowrap', fontFamily: 'Kanit, sans-serif' }}>
           {currentTime.toLocaleTimeString('th-TH')}
         </div>
       </Header>
 
-      <Content style={{ padding: '0 16px', marginTop: 84 }}>
+      {/* Mobile Drawer Navigation */}
+      <Drawer
+        title="Menu"
+        placement="right"
+        onClose={() => setMobileMenuOpen(false)}
+        open={mobileMenuOpen}
+        styles={{ body: { padding: 0 } }}
+      >
+        <Menu
+          mode="vertical"
+          selectedKeys={[currentView]}
+          items={navItems}
+          onSelect={({ key }) => {
+            setCurrentView(key);
+            setMobileMenuOpen(false);
+          }}
+          style={{ fontFamily: 'Kanit, sans-serif', borderRight: 'none' }}
+        />
+      </Drawer>
+
+      <Content className="responsive-padding" style={{ padding: '0 16px', marginTop: 84 }}>
 
         {/* Summary Card */}
         {bestLocation && (

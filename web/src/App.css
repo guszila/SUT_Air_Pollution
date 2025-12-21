@@ -1,0 +1,103 @@
+/* Global Font */
+/* Global Reset */
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ul,
+ol,
+li,
+figure,
+figcaption,
+blockquote,
+dl,
+dd {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Kanit', sans-serif;
+  overflow-x: hidden;
+  /* Prevent horizontal scroll */
+}
+
+/* Glassmorphism Header */
+.glass-header {
+  background: rgba(243, 112, 33, 0.85) !important;
+  /* Semi-transparent SUT Orange */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.transparent-menu {
+  background: transparent !important;
+  border-bottom: none !important;
+}
+
+/* Responsive Visibility */
+.mobile-visible {
+  display: none !important;
+}
+
+.desktop-visible {
+  display: block !important;
+}
+
+/* Responsiveness Utility Classes */
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+
+  .responsive-padding {
+    padding: 0 8px !important;
+    margin-top: 64px !important;
+    /* Reduce gap on mobile */
+  }
+
+  /* Dashboard View Typography */
+  .responsive-card-title {
+    font-size: 14px !important;
+  }
+
+  .responsive-stat-value {
+    font-size: 28px !important;
+    margin: 10px 0 !important;
+  }
+
+  .responsive-chart-height {
+    height: 250px !important;
+  }
+
+  .mobile-visible {
+    display: block !important;
+  }
+
+  .desktop-visible {
+    display: none !important;
+  }
+}
+
+/* Navigation Clickable Area */
+.clickable-brand {
+  cursor: pointer;
+  transition: opacity 0.3s;
+}
+
+.clickable-brand:hover {
+  opacity: 0.8;
+}
+
+/* Base Styles for consistency */
+.responsive-stat-value {
+  font-size: 40px;
+  font-weight: bold;
+  margin: 20px 0;
+}
