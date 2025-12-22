@@ -92,6 +92,13 @@ body.dark-mode .ant-layout {
   .desktop-visible {
     display: none !important;
   }
+
+  .header-time {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+  }
 }
 
 /* Navigation Clickable Area */

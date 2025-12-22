@@ -341,7 +341,7 @@ const AirDashboard = () => {
             />
           </div>
 
-          <div style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginLeft: '16px', whiteSpace: 'nowrap', fontFamily: 'Kanit, sans-serif' }}>
+          <div className="header-time" style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginLeft: '16px', whiteSpace: 'nowrap', fontFamily: 'Kanit, sans-serif' }}>
             {currentTime.toLocaleTimeString('th-TH')}
           </div>
         </Header>
@@ -369,7 +369,7 @@ const AirDashboard = () => {
         <Content className="responsive-padding" style={{ padding: '0 16px', marginTop: 100 }}>
 
           {/* Summary Card */}
-          {bestLocation && (
+          {bestLocation && currentView !== 'settings' && (
             <Card style={{ marginBottom: '16px', borderRadius: '10px', background: isDarkMode ? '#1f1f1f' : '#f6ffed', borderColor: isDarkMode ? '#303030' : '#b7eb8f' }}>
               <Row align="middle" justify="space-between">
                 <Col>
