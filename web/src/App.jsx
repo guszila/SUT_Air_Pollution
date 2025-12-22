@@ -1,6 +1,6 @@
 // Build update: 22/12/2025
 import React, { useState, useEffect, useRef } from 'react';
-import { Layout, Typography, Menu, Spin, Space, notification, Card, Row, Col, Badge, Drawer, Button } from 'antd';
+import { Layout, Typography, Menu, Spin, Space, notification, Card, Row, Col, Badge, Drawer, Button, ConfigProvider, theme } from 'antd';
 import { DashboardOutlined, TableOutlined, GlobalOutlined, MenuOutlined, EnvironmentOutlined, CheckCircleOutlined, HomeOutlined, SettingOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import DashboardView from './components/DashboardView';
@@ -8,12 +8,17 @@ import TableView from './components/TableView';
 import AirMap from './components/AirMap';
 import Settings from './components/Settings';
 import { useLanguage } from './context/LanguageContext';
+import { useTheme } from './context/ThemeContext';
+import { useSettings } from './context/SettingsContext';
 
 const { Header, Content, Footer } = Layout;
 const { Title, Text } = Typography;
 
 const AirDashboard = () => {
   const { t } = useLanguage();
+  const { isDarkMode } = useTheme();
+  const { alertThreshold, refreshInterval } = useSettings();
+
   const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState('home');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -43,7 +48,8 @@ const AirDashboard = () => {
   // Check for Alerts
   useEffect(() => {
     const checkAlert = (pm25, deviceName) => {
-      if (pm25 > 75) {
+      // Use user-defined threshold (default 75)
+      if (pm25 > alertThreshold) {
         const now = Date.now();
         // 10 minutes cooldown (600,000 ms)
         if (now - lastAlertTime.current > 600000) {
@@ -66,7 +72,7 @@ const AirDashboard = () => {
     if (device1) checkAlert(device1.pm25, 'อาคารเรียนรวม 1');
     if (device2) checkAlert(device2.pm25, 'อาคารบรรณสาร');
 
-  }, [device1, device2]);
+  }, [device1, device2, alertThreshold]);
 
   // Data Fetching
   const fetchAirQuality = async () => {
@@ -95,7 +101,6 @@ const AirDashboard = () => {
 
       setHistoryData(parsedData);
 
-      // Filter Data by Device Name
       // Filter Data by Device Name
       const d1Data = parsedData.filter(d => d.deviceId === 'A_Learning_Building_1' || d.deviceId === 'ESP32_02');
       const d2Data = parsedData.filter(d => d.deviceId === 'B_Library_Building' || d.deviceId === 'ESP32_01');
@@ -150,16 +155,10 @@ const AirDashboard = () => {
       setDevice2(latestD2);
 
       // --- Process Time Series Data (Merge by Time) ---
-      // We need to create a map of time -> { time, pm25_A, pm25_B }
       const timeMap = {};
 
-      // Helper to populate map
       const addToMap = (data, key) => {
         data.forEach(item => {
-          // Create a unique key for sorting: "YYYYMMDDHHMM" could work, or just use the time string if dates match.
-          // However, to be safe across days, we should use full date time.
-          // Format of date: "DD/MM/YYYY", time: "HH:mm:ss"
-          // Let's create a sortable timestamp
           const dateParts = item.date.split('/');
           const timeParts = item.time.split(':');
           if (dateParts.length === 3 && timeParts.length >= 2) {
@@ -179,14 +178,12 @@ const AirDashboard = () => {
       addToMap(d1Data, 'A');
       addToMap(d2Data, 'B');
 
-      // Convert to array and sort
       const sortedTimeSeries = Object.values(timeMap)
         .sort((a, b) => a.timestamp - b.timestamp)
         .slice(-50); // Keep last 50 points
 
       setTimeSeriesData(sortedTimeSeries);
 
-      // Calculate Average PM2.5 for Recommendation
       let sumPM25 = 0;
       let countPM25 = 0;
       if (latestD1) { sumPM25 += latestD1.pm25; countPM25++; }
@@ -196,14 +193,14 @@ const AirDashboard = () => {
       // Determine Best Air Quality
       if (latestD1 && latestD2) {
         if (latestD1.pm25 < latestD2.pm25) {
-          setBestLocation({ name: 'อาคารเรียนรวม 1', value: latestD1.pm25 });
+          setBestLocation({ name: 'learningBuilding', value: latestD1.pm25 });
         } else {
-          setBestLocation({ name: 'อาคารบรรณสาร', value: latestD2.pm25 });
+          setBestLocation({ name: 'library', value: latestD2.pm25 });
         }
       } else if (latestD1) {
-        setBestLocation({ name: 'อาคารเรียนรวม 1', value: latestD1.pm25 });
+        setBestLocation({ name: 'learningBuilding', value: latestD1.pm25 });
       } else if (latestD2) {
-        setBestLocation({ name: 'อาคารบรรณสาร', value: latestD2.pm25 });
+        setBestLocation({ name: 'library', value: latestD2.pm25 });
       }
 
       setLoading(false);
@@ -215,16 +212,21 @@ const AirDashboard = () => {
 
   useEffect(() => {
     fetchAirQuality();
-    const interval = setInterval(fetchAirQuality, 60000); // Update every minute
+
+    let interval;
+    if (refreshInterval > 0) {
+      interval = setInterval(fetchAirQuality, refreshInterval);
+    }
+
     const timeInterval = setInterval(() => setCurrentTime(new Date()), 1000);
 
     return () => {
-      clearInterval(interval);
+      if (interval) clearInterval(interval);
       clearInterval(timeInterval);
     };
-  }, []);
+  }, [refreshInterval]);
 
-  // Scroll Handler for Hide/Show Header
+  // Scroll Handler
   useEffect(() => {
     const handleScroll = () => {
       if (typeof window !== 'undefined') {
@@ -276,126 +278,128 @@ const AirDashboard = () => {
   ];
 
   return (
-    <Layout style={{ minHeight: '100vh', fontFamily: 'Kanit, sans-serif' }}>
-      <Header className="glass-header" style={{
-        position: 'fixed',
-        zIndex: 10,
-        width: '100%',
-        top: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 16px',
-        transition: 'transform 0.3s ease-in-out',
-        transform: showHeader ? 'translateY(0)' : 'translateY(-100%)'
-      }}>
-        <div
-          className="clickable-brand"
-          style={{ display: 'flex', alignItems: 'center' }}
-          onClick={() => setCurrentView('home')}
-        >
-          <div style={{
-            width: '40px',
-            height: '40px',
-            background: 'white',
-            marginRight: '12px',
-            borderRadius: '5px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            color: '#f37021',
-            fontWeight: 'bold',
-            flexShrink: 0
-          }}>
-            SUT
+    <ConfigProvider theme={{
+      algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+      token: {
+        fontFamily: 'Kanit, sans-serif'
+      }
+    }}>
+      <Layout style={{ minHeight: '100vh', fontFamily: 'Kanit, sans-serif' }}>
+        <Header className="glass-header" style={{
+          position: 'fixed',
+          zIndex: 10,
+          width: '100%',
+          height: '80px',
+          top: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 16px',
+          transition: 'transform 0.3s ease-in-out',
+          transform: showHeader ? 'translateY(0)' : 'translateY(-100%)'
+        }}>
+          <div
+            className="clickable-brand"
+            style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+            onClick={() => setCurrentView('home')}
+          >
+            <img
+              src="/sut_logo.png"
+              alt="SUT Air Pollution Logo"
+              style={{
+                height: '70px',
+                marginRight: '12px',
+                objectFit: 'contain'
+              }}
+            />
+            <Title level={4} style={{ color: 'white', margin: 0, marginRight: '20px', whiteSpace: 'nowrap', fontSize: '1.2rem', fontFamily: 'Kanit, sans-serif' }}>
+              <span className="desktop-only">{t.appTitle}</span>
+            </Title>
           </div>
-          <Title level={4} style={{ color: 'white', margin: 0, marginRight: '20px', whiteSpace: 'nowrap', fontSize: '1.2rem', fontFamily: 'Kanit, sans-serif' }}>
-            <span className="desktop-only">{t.appTitle}</span>
-          </Title>
-        </div>
 
-        {/* Desktop Menu */}
-        <div className="desktop-visible" style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'flex-end' }}>
+          {/* Desktop Menu */}
+          <div className="desktop-visible" style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'flex-end' }}>
+            <Menu
+              theme="dark"
+              mode="horizontal"
+              className="transparent-menu"
+              selectedKeys={[currentView]}
+              items={navItems}
+              onSelect={({ key }) => setCurrentView(key)}
+              style={{ width: '100%', justifyContent: 'flex-end', borderBottom: 'none', fontFamily: 'Kanit, sans-serif' }}
+              disabledOverflow={true}
+            />
+          </div>
+
+          {/* Mobile Hamburger Button */}
+          <div className="mobile-visible">
+            <Button
+              type="primary"
+              icon={<MenuOutlined />}
+              onClick={() => setMobileMenuOpen(true)}
+              style={{ background: 'transparent', border: 'none', fontSize: '18px' }}
+            />
+          </div>
+
+          <div style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginLeft: '16px', whiteSpace: 'nowrap', fontFamily: 'Kanit, sans-serif' }}>
+            {currentTime.toLocaleTimeString('th-TH')}
+          </div>
+        </Header>
+
+        {/* Mobile Drawer Navigation */}
+        <Drawer
+          title="Menu"
+          placement="right"
+          onClose={() => setMobileMenuOpen(false)}
+          open={mobileMenuOpen}
+          styles={{ body: { padding: 0 } }}
+        >
           <Menu
-            theme="dark"
-            mode="horizontal"
-            className="transparent-menu"
+            mode="vertical"
             selectedKeys={[currentView]}
             items={navItems}
-            onSelect={({ key }) => setCurrentView(key)}
-            style={{ width: '100%', justifyContent: 'flex-end', borderBottom: 'none', fontFamily: 'Kanit, sans-serif' }}
-            disabledOverflow={true}
+            onSelect={({ key }) => {
+              setCurrentView(key);
+              setMobileMenuOpen(false);
+            }}
+            style={{ fontFamily: 'Kanit, sans-serif', borderRight: 'none' }}
           />
-        </div>
+        </Drawer>
 
-        {/* Mobile Hamburger Button */}
-        <div className="mobile-visible">
-          <Button
-            type="primary"
-            icon={<MenuOutlined />}
-            onClick={() => setMobileMenuOpen(true)}
-            style={{ background: 'transparent', border: 'none', fontSize: '18px' }}
-          />
-        </div>
+        <Content className="responsive-padding" style={{ padding: '0 16px', marginTop: 100 }}>
 
-        <div style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginLeft: '16px', whiteSpace: 'nowrap', fontFamily: 'Kanit, sans-serif' }}>
-          {currentTime.toLocaleTimeString('th-TH')}
-        </div>
-      </Header>
-
-      {/* Mobile Drawer Navigation */}
-      <Drawer
-        title="Menu"
-        placement="right"
-        onClose={() => setMobileMenuOpen(false)}
-        open={mobileMenuOpen}
-        styles={{ body: { padding: 0 } }}
-      >
-        <Menu
-          mode="vertical"
-          selectedKeys={[currentView]}
-          items={navItems}
-          onSelect={({ key }) => {
-            setCurrentView(key);
-            setMobileMenuOpen(false);
-          }}
-          style={{ fontFamily: 'Kanit, sans-serif', borderRight: 'none' }}
-        />
-      </Drawer>
-
-      <Content className="responsive-padding" style={{ padding: '0 16px', marginTop: 84 }}>
-
-        {/* Summary Card */}
-        {bestLocation && (
-          <Card style={{ marginBottom: '16px', borderRadius: '10px', background: '#f6ffed', borderColor: '#b7eb8f' }}>
-            <Row align="middle" justify="space-between">
-              <Col>
-                <Space>
-                  <CheckCircleOutlined style={{ fontSize: '24px', color: '#52c41a' }} />
-                  <div>
-                    <Text strong style={{ fontSize: '16px', fontFamily: 'Kanit, sans-serif' }}>{t.summary}</Text>
-                    <div style={{ fontFamily: 'Kanit, sans-serif', color: '#52c41a' }}>
-                      {t.bestAir}: <b>{bestLocation.name}</b> (PM2.5: {bestLocation.value})
+          {/* Summary Card */}
+          {bestLocation && (
+            <Card style={{ marginBottom: '16px', borderRadius: '10px', background: isDarkMode ? '#1f1f1f' : '#f6ffed', borderColor: isDarkMode ? '#303030' : '#b7eb8f' }}>
+              <Row align="middle" justify="space-between">
+                <Col>
+                  <Space>
+                    <CheckCircleOutlined style={{ fontSize: '24px', color: '#52c41a' }} />
+                    <div>
+                      <Text strong style={{ fontSize: '16px', fontFamily: 'Kanit, sans-serif' }}>{t.summary}</Text>
+                      <div style={{ fontFamily: 'Kanit, sans-serif', color: '#52c41a' }}>
+                        {t.bestAir}: <b>{t[bestLocation.name]}</b> (PM2.5: {bestLocation.value})
+                      </div>
                     </div>
-                  </div>
-                </Space>
-              </Col>
-              <Col>
-                <Badge status="processing" text={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.updateRecent}</span>} />
-              </Col>
-            </Row>
-          </Card>
-        )}
+                  </Space>
+                </Col>
+                <Col>
+                  <Badge status="processing" text={<span style={{ fontFamily: 'Kanit, sans-serif', color: isDarkMode ? 'rgba(255, 255, 255, 0.65)' : undefined }}>{t.updateRecent}</span>} />
+                </Col>
+              </Row>
+            </Card>
+          )}
 
-        <div style={{ background: '#fff', padding: 16, minHeight: 450, borderRadius: '10px' }}>
-          {renderContent()}
-        </div>
-      </Content>
+          <div style={{ background: isDarkMode ? '#141414' : '#fff', padding: 16, minHeight: 450, borderRadius: '10px' }}>
+            {renderContent()}
+          </div>
+        </Content>
 
-      <Footer style={{ textAlign: 'center', padding: '20px 10px', fontFamily: 'Kanit, sans-serif' }}>
-        © 2025 SUT Air Pollution
-      </Footer>
-    </Layout>
+        <Footer style={{ textAlign: 'center', padding: '20px 10px', fontFamily: 'Kanit, sans-serif' }}>
+          © 2025 SUT Air Pollution
+        </Footer>
+      </Layout>
+    </ConfigProvider>
   );
 };
 

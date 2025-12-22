@@ -133,8 +133,8 @@ const HealthAdvisoryCard = ({ pm25 }) => {
 const RankingTable = ({ device1, device2 }) => {
     const { t } = useLanguage();
     const data = [
-        { key: '1', name: 'อาคารเรียนรวม 1', pm25: device1?.pm25 || 0, status: device1?.pm25 <= 25 ? 'success' : (device1?.pm25 <= 37.5 ? 'warning' : 'error') },
-        { key: '2', name: 'อาคารบรรณสาร', pm25: device2?.pm25 || 0, status: device2?.pm25 <= 25 ? 'success' : (device2?.pm25 <= 37.5 ? 'warning' : 'error') },
+        { key: '1', name: t.learningBuilding, pm25: device1?.pm25 || 0, status: device1?.pm25 <= 25 ? 'success' : (device1?.pm25 <= 37.5 ? 'warning' : 'error') },
+        { key: '2', name: t.library, pm25: device2?.pm25 || 0, status: device2?.pm25 <= 25 ? 'success' : (device2?.pm25 <= 37.5 ? 'warning' : 'error') },
     ].sort((a, b) => a.pm25 - b.pm25);
 
     const columns = [
@@ -164,8 +164,8 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                 <>
                     <HealthAdvisoryCard pm25={averagePM25} />
 
-                    <StatusSection title="อาคารเรียนรวม 1 (Learning Building 1)" data={device1} />
-                    <StatusSection title="อาคารบรรณสาร (Library)" data={device2} />
+                    <StatusSection title={t.learningBuilding} data={device1} />
+                    <StatusSection title={t.library} data={device2} />
 
                     <Row gutter={[16, 16]}>
                         <Col xs={24} lg={12}>
@@ -187,7 +187,7 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                                                         <div style={{ backgroundColor: '#fff', padding: '10px', border: '1px solid #ccc', borderRadius: '5px', fontFamily: 'Kanit' }}>
                                                             <p style={{ margin: 0, fontWeight: 'bold' }}>{label}</p>
                                                             <p style={{ margin: 0, color: (data.deviceId === 'A_Learning_Building_1' || data.deviceId === 'ESP32_02') ? '#1890ff' : '#52c41a' }}>
-                                                                {(data.deviceId === 'A_Learning_Building_1' || data.deviceId === 'ESP32_02') ? 'อาคารเรียนรวม 1' : 'อาคารบรรณสาร'}: {data.pm25} µg/m³
+                                                                {(data.deviceId === 'A_Learning_Building_1' || data.deviceId === 'ESP32_02') ? t.learningBuilding : t.library}: {data.pm25} µg/m³
                                                             </p>
                                                         </div>
                                                     );
@@ -221,8 +221,8 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                                                 labelStyle={{ fontWeight: 'bold' }}
                                             />
                                             <Legend wrapperStyle={{ fontFamily: 'Kanit, sans-serif' }} />
-                                            <Line type="monotone" dataKey="pm25_A" name="อาคารเรียนรวม 1" stroke="#1890ff" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
-                                            <Line type="monotone" dataKey="pm25_B" name="อาคารบรรณสาร" stroke="#ff4d4f" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                                            <Line type="monotone" dataKey="pm25_A" name={t.learningBuilding} stroke="#1890ff" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                                            <Line type="monotone" dataKey="pm25_B" name={t.library} stroke="#ff4d4f" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -277,10 +277,10 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                                         labelStyle={{ fontWeight: 'bold' }}
                                     />
                                     <Legend wrapperStyle={{ fontFamily: 'Kanit, sans-serif' }} />
-                                    <Bar dataKey="pm25_A" name="อาคารเรียนรวม 1" fill="#1890ff" radius={[5, 5, 0, 0]}>
+                                    <Bar dataKey="pm25_A" name={t.learningBuilding} fill="#1890ff" radius={[5, 5, 0, 0]}>
                                         <LabelList dataKey="pm25_A" position="top" style={{ fontFamily: 'Kanit, sans-serif' }} />
                                     </Bar>
-                                    <Bar dataKey="pm25_B" name="อาคารบรรณสาร" fill="#52c41a" radius={[5, 5, 0, 0]}>
+                                    <Bar dataKey="pm25_B" name={t.library} fill="#52c41a" radius={[5, 5, 0, 0]}>
                                         <LabelList dataKey="pm25_B" position="top" style={{ fontFamily: 'Kanit, sans-serif' }} />
                                     </Bar>
                                 </BarChart>

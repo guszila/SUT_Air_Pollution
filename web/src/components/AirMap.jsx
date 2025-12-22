@@ -22,7 +22,7 @@ L.Marker.prototype.options.icon = DefaultIcon;
 const AirMap = ({ device1, device2, dailyStats }) => {
     const { t } = useLanguage();
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [selectedDevice, setSelectedDevice] = useState(null);
+    const [selectedDeviceId, setSelectedDeviceId] = useState(null);
 
     // SUT Coordinates
     const mapCenter = [14.88025, 102.01658]; // Approximate center between the two buildings
@@ -31,15 +31,15 @@ const AirMap = ({ device1, device2, dailyStats }) => {
     const devices = [
         {
             id: 'A_Learning_Building_1',
-            name: 'อาคารเรียนรวม 1 (Learning Bldg 1)',
-            thaiName: 'อาคารเรียนรวม 1',
+            name: t.learningBuilding,
+            thaiName: t.learningBuilding,
             position: [14.881556, 102.016861],
             data: device1
         },
         {
             id: 'B_Library_Building',
-            name: 'อาคารบรรณสาร (Library)',
-            thaiName: 'อาคารบรรณสาร',
+            name: t.library,
+            thaiName: t.library,
             position: [14.878944, 102.016306],
             data: device2
         }
@@ -66,16 +66,18 @@ const AirMap = ({ device1, device2, dailyStats }) => {
         return t.adviceHazardous;
     };
 
+    const activeDevice = devices.find(d => d.id === selectedDeviceId);
+
     const openDetail = (device) => {
         if (device.data) {
-            setSelectedDevice(device);
+            setSelectedDeviceId(device.id);
             setIsModalVisible(true);
         }
     };
 
     const handleCancel = () => {
         setIsModalVisible(false);
-        setSelectedDevice(null);
+        setSelectedDeviceId(null);
     };
 
     return (
@@ -146,8 +148,8 @@ const AirMap = ({ device1, device2, dailyStats }) => {
                 title={
                     <div style={{ fontFamily: 'Kanit, sans-serif', display: 'flex', alignItems: 'center' }}>
                         <EnvironmentOutlined style={{ marginRight: 8, color: '#1890ff' }} />
-                        <span style={{ fontSize: '18px' }}>{selectedDevice?.thaiName}</span>
-                        {selectedDevice && (
+                        <span style={{ fontSize: '18px' }}>{activeDevice?.thaiName}</span>
+                        {activeDevice && (
                             <Tag color="success" style={{ marginLeft: '10px' }}>{t.deviceStatus}: {t.online}</Tag>
                         )}
                     </div>
@@ -162,12 +164,12 @@ const AirMap = ({ device1, device2, dailyStats }) => {
                 centered
                 styles={{ content: { borderRadius: '15px', overflow: 'hidden' } }}
             >
-                {selectedDevice && selectedDevice.data ? (
+                {activeDevice && activeDevice.data ? (
                     <div style={{ fontFamily: 'Kanit, sans-serif' }}>
 
                         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                            <Tag color={getStatusColor(selectedDevice.data.pm25)} style={{ fontSize: '16px', padding: '5px 15px', borderRadius: '20px' }}>
-                                {getStatusText(selectedDevice.data.pm25)}
+                            <Tag color={getStatusColor(activeDevice.data.pm25)} style={{ fontSize: '16px', padding: '5px 15px', borderRadius: '20px' }}>
+                                {getStatusText(activeDevice.data.pm25)}
                             </Tag>
                         </div>
 
@@ -176,25 +178,25 @@ const AirMap = ({ device1, device2, dailyStats }) => {
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
                                     <div style={{ flex: 1, marginRight: '10px' }}>
                                         <div style={{ height: '10px', background: '#f0f0f0', borderRadius: '5px', overflow: 'hidden' }}>
-                                            <div style={{ width: `${Math.min(selectedDevice.data.pm25, 100)}%`, height: '100%', background: getStatusColor(selectedDevice.data.pm25) }} />
+                                            <div style={{ width: `${Math.min(activeDevice.data.pm25, 100)}%`, height: '100%', background: getStatusColor(activeDevice.data.pm25) }} />
                                         </div>
                                     </div>
-                                    <b>{selectedDevice.data.pm25}</b>
+                                    <b>{activeDevice.data.pm25}</b>
                                 </div>
                             </Descriptions.Item>
                             <Descriptions.Item label={t.temperature}>
-                                <b>{selectedDevice.data.temp}</b> °C
+                                <b>{activeDevice.data.temp}</b> °C
                             </Descriptions.Item>
                             <Descriptions.Item label={t.humidity}>
-                                <b>{selectedDevice.data.humidity}</b> %
+                                <b>{activeDevice.data.humidity}</b> %
                             </Descriptions.Item>
                             <Descriptions.Item label={t.recommendation}>
-                                <span style={{ color: getStatusColor(selectedDevice.data.pm25) }}>
-                                    {getRecommendation(selectedDevice.data.pm25)}
+                                <span style={{ color: getStatusColor(activeDevice.data.pm25) }}>
+                                    {getRecommendation(activeDevice.data.pm25)}
                                 </span>
                             </Descriptions.Item>
-                            <Descriptions.Item label="เวลาอัปเดต">
-                                {selectedDevice.data.time}
+                            <Descriptions.Item label={t.updateTime}>
+                                {activeDevice.data.time}
                             </Descriptions.Item>
                         </Descriptions>
                     </div>

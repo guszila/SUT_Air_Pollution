@@ -53,7 +53,18 @@ export const translations = {
         online: "ออนไลน์",
         close: "ปิด (Close)",
         loading: "กำลังโหลดข้อมูล...",
-        recommendation: "ข้อแนะนำ"
+        recommendation: "ข้อแนะนำ",
+        learningBuilding: "อาคารเรียนรวม 1",
+        library: "อาคารบรรณสาร",
+        updateTime: "เวลาอัปเดต",
+
+        // Settings
+        notification: "การแจ้งเตือน (Notifications)",
+        alertThreshold: "แจ้งเตือนเมื่อ PM2.5 เกินกว่า",
+        autoRefresh: "อัปเดตข้อมูลอัตโนมัติ (Auto Refresh)",
+        every1min: "ทุก 1 นาที",
+        every5min: "ทุก 5 นาที",
+        turnOff: "ปิด (Off)"
     },
     en: {
         // Navigation
@@ -105,7 +116,18 @@ export const translations = {
         online: "Online",
         close: "Close",
         loading: "Loading data...",
-        recommendation: "Recommendation"
+        recommendation: "Recommendation",
+        learningBuilding: "Learning Building 1",
+        library: "Library",
+        updateTime: "Update Time",
+
+        // Settings
+        notification: "Notifications",
+        alertThreshold: "Alert when PM2.5 exceeds",
+        autoRefresh: "Auto Refresh Data",
+        every1min: "Every 1 min",
+        every5min: "Every 5 min",
+        turnOff: "Turn Off"
     }
 };
 

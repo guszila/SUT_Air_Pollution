@@ -26,12 +26,21 @@ body {
   /* Prevent horizontal scroll */
 }
 
+/* Dark Mode Global Styles */
+body.dark-mode {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+body.dark-mode .ant-layout {
+  background: #000000;
+}
+
 /* Glassmorphism Header */
 .glass-header {
-  background: rgba(243, 112, 33, 0.85) !important;
-  /* Semi-transparent SUT Orange */
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: #f37021 !important;
+  /* Solid SUT Orange to match logo */
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
