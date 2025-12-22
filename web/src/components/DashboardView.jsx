@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import { Card, Row, Col, Typography, Progress, Divider, Table, Tag } from 'antd';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, LabelList } from 'recharts';
 
@@ -10,14 +11,15 @@ import { FireFilled, CloudFilled, SmileFilled, MehFilled, FrownFilled } from '@a
 const { Title, Text } = Typography;
 
 const StatusSection = ({ title, data }) => {
+    const { t } = useLanguage();
     const { pm25, temp, humidity } = data || {};
 
     const getStatus = (val) => {
         if (val === undefined || val === null) return { color: '#d9d9d9', text: 'No Data' };
-        if (val <= 15) return { color: '#52c41a', text: 'Excellent' };
-        if (val <= 37) return { color: '#faad14', text: 'Moderate' };
-        if (val <= 75) return { color: '#ff4d4f', text: 'Unhealthy' };
-        return { color: '#722ed1', text: 'Hazardous' };
+        if (val <= 15) return { color: '#52c41a', text: t.excellent };
+        if (val <= 37) return { color: '#faad14', text: t.moderate };
+        if (val <= 75) return { color: '#ff4d4f', text: t.unhealthy };
+        return { color: '#722ed1', text: t.hazardous };
     };
 
     const currentStatus = getStatus(pm25);
@@ -28,7 +30,7 @@ const StatusSection = ({ title, data }) => {
                 {/* PM2.5 Card */}
                 <Col xs={24} sm={8}>
                     <Card hoverable bordered={false} style={{ textAlign: 'center', background: 'transparent', boxShadow: 'none' }}>
-                        <Title level={5} style={{ fontFamily: 'Kanit, sans-serif' }}>ค่า PM2.5</Title>
+                        <Title level={5} style={{ fontFamily: 'Kanit, sans-serif' }}>{t.pm25Value}</Title>
                         <Progress
                             type="dashboard"
                             percent={pm25 ? Math.min(((pm25) / 100) * 100, 100) : 0}
@@ -58,12 +60,12 @@ const StatusSection = ({ title, data }) => {
                     <Card hoverable bordered={false} style={{ textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: 'transparent', boxShadow: 'none' }}>
                         <Title level={5} style={{ fontFamily: 'Kanit, sans-serif' }}>
                             <FireFilled style={{ color: '#ff4d4f', marginRight: '8px' }} />
-                            อุณหภูมิ (Temp)
+                            {t.temperature}
                         </Title>
                         <div className="responsive-stat-value" style={{ color: '#1890ff', fontFamily: 'Kanit, sans-serif' }}>
                             {temp !== undefined ? temp : '-'} °C
                         </div>
-                        <Text type="secondary" style={{ fontFamily: 'Kanit, sans-serif' }}>เรียลไทม์</Text>
+                        <Text type="secondary" style={{ fontFamily: 'Kanit, sans-serif' }}>{t.realtime}</Text>
                     </Card>
                 </Col>
 
@@ -72,12 +74,12 @@ const StatusSection = ({ title, data }) => {
                     <Card hoverable bordered={false} style={{ textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: 'transparent', boxShadow: 'none' }}>
                         <Title level={5} style={{ fontFamily: 'Kanit, sans-serif' }}>
                             <CloudFilled style={{ color: '#13c2c2', marginRight: '8px' }} />
-                            ความชื้น (Humidity)
+                            {t.humidity}
                         </Title>
                         <div className="responsive-stat-value" style={{ color: '#13c2c2' }}>
                             {humidity !== undefined ? humidity : '-'} %
                         </div>
-                        <Text type="secondary">Real-time</Text>
+                        <Text type="secondary">{t.realtime}</Text>
                     </Card>
                 </Col>
             </Row >
@@ -86,25 +88,26 @@ const StatusSection = ({ title, data }) => {
 };
 
 const HealthAdvisoryCard = ({ pm25 }) => {
+    const { t } = useLanguage();
     let bg = '#52c41a';
-    let text = 'Excellent';
-    let advice = 'อากาศดีมาก: เหมาะสำหรับทำกิจกรรมกลางแจ้ง';
+    let text = t.excellent;
+    let advice = t.adviceExcellent;
     let icon = <SmileFilled style={{ fontSize: '48px', color: 'white' }} />;
 
     if (pm25 > 15 && pm25 <= 25) {
         bg = '#faad14';
-        text = 'Good';
-        advice = 'อากาศดี: ประชาชนทั่วไปเดินทางได้ตามปกติ';
+        text = t.good;
+        advice = t.adviceGood;
         icon = <MehFilled style={{ fontSize: '48px', color: 'white' }} />;
     } else if (pm25 > 25 && pm25 <= 37.5) {
         bg = '#fa8c16';
-        text = 'Moderate';
-        advice = 'ปานกลาง: ควรลดระยะเวลาการทำกิจกรรมกลางแจ้ง';
+        text = t.moderate;
+        advice = t.adviceModerate;
         icon = <MehFilled style={{ fontSize: '48px', color: 'white' }} />;
     } else if (pm25 > 37.5) {
         bg = '#ff4d4f';
-        text = 'Unhealthy';
-        advice = 'เริ่มมีผลกระทบ: หลีกเลี่ยงกิจกรรมกลางแจ้ง';
+        text = t.unhealthy;
+        advice = t.adviceUnhealthy;
         icon = <FrownFilled style={{ fontSize: '48px', color: 'white' }} />;
     }
 
@@ -128,26 +131,28 @@ const HealthAdvisoryCard = ({ pm25 }) => {
 };
 
 const RankingTable = ({ device1, device2 }) => {
+    const { t } = useLanguage();
     const data = [
         { key: '1', name: 'อาคารเรียนรวม 1', pm25: device1?.pm25 || 0, status: device1?.pm25 <= 25 ? 'success' : (device1?.pm25 <= 37.5 ? 'warning' : 'error') },
         { key: '2', name: 'อาคารบรรณสาร', pm25: device2?.pm25 || 0, status: device2?.pm25 <= 25 ? 'success' : (device2?.pm25 <= 37.5 ? 'warning' : 'error') },
     ].sort((a, b) => a.pm25 - b.pm25);
 
     const columns = [
-        { title: 'อันดับ', dataIndex: 'key', render: (t, r, i) => i + 1, width: 80 },
-        { title: 'สถานที่', dataIndex: 'name' },
+        { title: t.rank, dataIndex: 'key', render: (t, r, i) => i + 1, width: 80 },
+        { title: t.location, dataIndex: 'name' },
         { title: 'PM2.5', dataIndex: 'pm25', render: (val) => `${val} µg/m³` },
-        { title: 'สถานะ', dataIndex: 'status', render: (tag) => <Tag color={tag}>{tag === 'success' ? 'ดี' : (tag === 'warning' ? 'ปานกลาง' : 'แย่')}</Tag> }
+        { title: t.status, dataIndex: 'status', render: (tag) => <Tag color={tag}>{tag === 'success' ? t.good : (tag === 'warning' ? t.moderate : t.unhealthy)}</Tag> }
     ];
 
     return (
-        <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>อันดับคุณภาพอากาศ (Air Quality Ranking)</span>} style={{ borderRadius: '15px', marginBottom: '20px' }}>
+        <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.ranking}</span>} style={{ borderRadius: '15px', marginBottom: '20px' }}>
             <Table dataSource={data} columns={columns} pagination={false} size="small" />
         </Card>
     );
 };
 
 const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesData, averagePM25, mode = 'home' }) => {
+    const { t } = useLanguage();
 
     // Prepare data for the single-stream chart (Last 20 readings)
     const chartData = historyData ? historyData.slice(-20) : [];
@@ -168,7 +173,7 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                         </Col>
                         <Col xs={24} lg={12}>
                             {/* Ranking Table Side - can put chart here or full width below */}
-                            <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>PM2.5 Trend (Last 20 Readings)</span>} style={{ borderRadius: '15px', marginBottom: '20px' }}>
+                            <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.pm25Trend}</span>} style={{ borderRadius: '15px', marginBottom: '20px' }}>
                                 <div style={{ width: '100%', height: 300 }}>
                                     <ResponsiveContainer>
                                         <LineChart data={chartData}>
@@ -204,7 +209,7 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                 <>
                     <Row gutter={[16, 16]}>
                         <Col xs={24} lg={16}>
-                            <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>แนวโน้มคุณภาพอากาศย้อนหลัง (Time Series Trend)</span>} style={{ borderRadius: '15px' }}>
+                            <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.trend}</span>} style={{ borderRadius: '15px' }}>
                                 <div style={{ width: '100%', height: 300 }}>
                                     <ResponsiveContainer>
                                         <LineChart data={timeSeriesData}>
@@ -225,7 +230,7 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                         </Col>
 
                         <Col xs={24} lg={8}>
-                            <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>คำแนะนำสุขภาพ (Health Advice)</span>} style={{ borderRadius: '15px', height: '100%' }}>
+                            <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.healthAdvice}</span>} style={{ borderRadius: '15px', height: '100%' }}>
                                 <div style={{ textAlign: 'center', padding: '20px 0' }}>
                                     {averagePM25 <= 25 && <SmileFilled style={{ fontSize: '64px', color: '#52c41a' }} />}
                                     {averagePM25 > 25 && averagePM25 <= 50 && <MehFilled style={{ fontSize: '64px', color: '#faad14' }} />}
@@ -236,10 +241,10 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                                             PM2.5 เฉลี่ย: {averagePM25} µg/m³
                                         </div>
                                         <div style={{ fontSize: '16px' }}>
-                                            {averagePM25 <= 25 && "อากาศดีมาก: เหมาะสำหรับทำกิจกรรมกลางแจ้ง"}
-                                            {averagePM25 > 25 && averagePM25 <= 37 && "อากาศปานกลาง: ประชาชนทั่วไปทำกิจกรรมได้ตามปกติ"}
-                                            {averagePM25 > 37 && averagePM25 <= 50 && "เริ่มมีผลกระทบ: ควรลดระยะเวลาการทำกิจกรรมกลางแจ้ง"}
-                                            {averagePM25 > 50 && "มีผลกระทบต่อสุขภาพ: หลีกเลี่ยงกิจกรรมกลางแจ้ง สวมหน้ากากอนามัย"}
+                                            {averagePM25 <= 25 && t.adviceExcellent}
+                                            {averagePM25 > 25 && averagePM25 <= 37 && t.adviceGood}
+                                            {averagePM25 > 37 && averagePM25 <= 50 && t.adviceModerate}
+                                            {averagePM25 > 50 && t.adviceHazardous}
                                         </div>
                                     </div>
                                 </div>
@@ -249,7 +254,7 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
 
                     {/* Daily Statistics Bar Chart */}
                     <Card
-                        title={<span style={{ fontFamily: 'Kanit, sans-serif', fontSize: '18px' }}>สถิติค่าฝุ่น PM2.5 รายวัน (7 วันล่าสุด)</span>}
+                        title={<span style={{ fontFamily: 'Kanit, sans-serif', fontSize: '18px' }}>{t.dailyStats}</span>}
                         style={{ marginTop: '20px', borderRadius: '15px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                     >
                         <div style={{ width: '100%', height: 300 }}>

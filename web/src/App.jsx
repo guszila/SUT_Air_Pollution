@@ -1,16 +1,19 @@
 // Build update: 22/12/2025
 import React, { useState, useEffect, useRef } from 'react';
 import { Layout, Typography, Menu, Spin, Space, notification, Card, Row, Col, Badge, Drawer, Button } from 'antd';
-import { DashboardOutlined, TableOutlined, GlobalOutlined, MenuOutlined, EnvironmentOutlined, CheckCircleOutlined, HomeOutlined } from '@ant-design/icons';
+import { DashboardOutlined, TableOutlined, GlobalOutlined, MenuOutlined, EnvironmentOutlined, CheckCircleOutlined, HomeOutlined, SettingOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import DashboardView from './components/DashboardView';
 import TableView from './components/TableView';
 import AirMap from './components/AirMap';
+import Settings from './components/Settings';
+import { useLanguage } from './context/LanguageContext';
 
 const { Header, Content, Footer } = Layout;
 const { Title, Text } = Typography;
 
 const AirDashboard = () => {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState('home');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -257,16 +260,19 @@ const AirDashboard = () => {
           device2={device2}
           dailyStats={dailyStats}
         />;
+      case 'settings':
+        return <Settings />;
       default:
         return <DashboardView mode="home" device1={device1} device2={device2} historyData={historyData} dailyStats={dailyStats} />;
     }
   };
 
   const navItems = [
-    { label: 'Home', key: 'home', icon: <HomeOutlined /> },
-    { label: 'Dashboard', key: 'dashboard', icon: <DashboardOutlined /> },
-    { key: 'table', icon: <TableOutlined />, label: 'Table' },
-    { key: 'map', icon: <GlobalOutlined />, label: 'Map' },
+    { label: t.home, key: 'home', icon: <HomeOutlined /> },
+    { label: t.dashboard, key: 'dashboard', icon: <DashboardOutlined /> },
+    { key: 'table', icon: <TableOutlined />, label: t.table },
+    { key: 'map', icon: <GlobalOutlined />, label: t.map },
+    { key: 'settings', icon: <SettingOutlined />, label: t.settings },
   ];
 
   return (
@@ -304,7 +310,7 @@ const AirDashboard = () => {
             SUT
           </div>
           <Title level={4} style={{ color: 'white', margin: 0, marginRight: '20px', whiteSpace: 'nowrap', fontSize: '1.2rem', fontFamily: 'Kanit, sans-serif' }}>
-            <span className="desktop-only">SUT Air Pollution</span>
+            <span className="desktop-only">{t.appTitle}</span>
           </Title>
         </div>
 
@@ -367,15 +373,15 @@ const AirDashboard = () => {
                 <Space>
                   <CheckCircleOutlined style={{ fontSize: '24px', color: '#52c41a' }} />
                   <div>
-                    <Text strong style={{ fontSize: '16px', fontFamily: 'Kanit, sans-serif' }}>สรุปสภาพอากาศ (Summary)</Text>
+                    <Text strong style={{ fontSize: '16px', fontFamily: 'Kanit, sans-serif' }}>{t.summary}</Text>
                     <div style={{ fontFamily: 'Kanit, sans-serif', color: '#52c41a' }}>
-                      อากาศดีที่สุดที่: <b>{bestLocation.name}</b> (PM2.5: {bestLocation.value})
+                      {t.bestAir}: <b>{bestLocation.name}</b> (PM2.5: {bestLocation.value})
                     </div>
                   </div>
                 </Space>
               </Col>
               <Col>
-                <Badge status="processing" text={<span style={{ fontFamily: 'Kanit, sans-serif' }}>อัปเดตล่าสุด</span>} />
+                <Badge status="processing" text={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.updateRecent}</span>} />
               </Col>
             </Row>
           </Card>

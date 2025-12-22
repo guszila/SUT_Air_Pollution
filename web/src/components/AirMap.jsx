@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import { MapContainer, TileLayer, Marker, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -19,6 +20,7 @@ let DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon;
 
 const AirMap = ({ device1, device2, dailyStats }) => {
+    const { t } = useLanguage();
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedDevice, setSelectedDevice] = useState(null);
 
@@ -51,17 +53,17 @@ const AirMap = ({ device1, device2, dailyStats }) => {
     };
 
     const getStatusText = (pm25) => {
-        if (pm25 <= 15) return 'ดีมาก (Excellent)';
-        if (pm25 <= 37) return 'ปานกลาง (Moderate)';
-        if (pm25 <= 75) return 'เริ่มมีผลกระทบ (Unhealthy)';
-        return 'อันตราย (Hazardous)';
+        if (pm25 <= 15) return `${t.excellent}`;
+        if (pm25 <= 37) return `${t.moderate}`;
+        if (pm25 <= 75) return `${t.unhealthy}`;
+        return `${t.hazardous}`;
     };
 
     const getRecommendation = (pm25) => {
-        if (pm25 <= 15) return 'ทำกิจกรรมกลางแจ้งได้ตามปกติ';
-        if (pm25 <= 37) return 'ควรลดระยะเวลาการทำกิจกรรมกลางแจ้ง';
-        if (pm25 <= 75) return 'ควรสวมหน้ากากอนามัย และหลีกเลี่ยงกิจกรรมกลางแจ้ง';
-        return 'ควรงดกิจกรรมกลางแจ้งทุกชนิด และสวมหน้ากาก N95';
+        if (pm25 <= 15) return t.adviceExcellent;
+        if (pm25 <= 37) return t.adviceModerate;
+        if (pm25 <= 75) return t.adviceUnhealthy;
+        return t.adviceHazardous;
     };
 
     const openDetail = (device) => {
@@ -146,7 +148,7 @@ const AirMap = ({ device1, device2, dailyStats }) => {
                         <EnvironmentOutlined style={{ marginRight: 8, color: '#1890ff' }} />
                         <span style={{ fontSize: '18px' }}>{selectedDevice?.thaiName}</span>
                         {selectedDevice && (
-                            <Tag color="success" style={{ marginLeft: '10px' }}>สถานะอุปกรณ์: ออนไลน์</Tag>
+                            <Tag color="success" style={{ marginLeft: '10px' }}>{t.deviceStatus}: {t.online}</Tag>
                         )}
                     </div>
                 }
@@ -154,7 +156,7 @@ const AirMap = ({ device1, device2, dailyStats }) => {
                 onCancel={handleCancel}
                 footer={[
                     <Button key="back" onClick={handleCancel} style={{ fontFamily: 'Kanit, sans-serif' }}>
-                        ปิด (Close)
+                        {t.close}
                     </Button>
                 ]}
                 centered
@@ -170,7 +172,7 @@ const AirMap = ({ device1, device2, dailyStats }) => {
                         </div>
 
                         <Descriptions bordered column={1} size="small" contentStyle={{ fontFamily: 'Kanit, sans-serif' }} labelStyle={{ fontFamily: 'Kanit, sans-serif', fontWeight: 'bold' }}>
-                            <Descriptions.Item label="ค่า PM2.5 (µg/m³)">
+                            <Descriptions.Item label={`${t.pm25Value} (µg/m³)`}>
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
                                     <div style={{ flex: 1, marginRight: '10px' }}>
                                         <div style={{ height: '10px', background: '#f0f0f0', borderRadius: '5px', overflow: 'hidden' }}>
@@ -180,13 +182,13 @@ const AirMap = ({ device1, device2, dailyStats }) => {
                                     <b>{selectedDevice.data.pm25}</b>
                                 </div>
                             </Descriptions.Item>
-                            <Descriptions.Item label="อุณหภูมิ (Temperature)">
+                            <Descriptions.Item label={t.temperature}>
                                 <b>{selectedDevice.data.temp}</b> °C
                             </Descriptions.Item>
-                            <Descriptions.Item label="ความชื้น (Humidity)">
+                            <Descriptions.Item label={t.humidity}>
                                 <b>{selectedDevice.data.humidity}</b> %
                             </Descriptions.Item>
-                            <Descriptions.Item label="ข้อแนะนำ">
+                            <Descriptions.Item label={t.recommendation}>
                                 <span style={{ color: getStatusColor(selectedDevice.data.pm25) }}>
                                     {getRecommendation(selectedDevice.data.pm25)}
                                 </span>
@@ -198,7 +200,7 @@ const AirMap = ({ device1, device2, dailyStats }) => {
                     </div>
                 ) : (
                     <div style={{ textAlign: 'center', padding: '20px', fontFamily: 'Kanit, sans-serif' }}>
-                        <p>กำลังโหลดข้อมูล...</p>
+                        <p>{t.loading}</p>
                     </div>
                 )}
             </Modal>

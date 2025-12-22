@@ -1,20 +1,22 @@
 import React from 'react';
 import { Table } from 'antd';
+import { useLanguage } from '../context/LanguageContext';
 
 const TableView = ({ data }) => {
+    const { t } = useLanguage();
     const columns = [
         {
-            title: 'วันที่',
+            title: t.date,
             dataIndex: 'date',
             key: 'date',
         },
         {
-            title: 'เวลา',
+            title: t.time,
             dataIndex: 'time',
             key: 'time',
         },
         {
-            title: 'อุปกรณ์ (Device)',
+            title: t.device,
             dataIndex: 'deviceId',
             key: 'deviceId',
             render: (text) => {
@@ -24,7 +26,7 @@ const TableView = ({ data }) => {
             }
         },
         {
-            title: 'ค่า PM2.5 (µg/m³)',
+            title: `${t.pm25Value} (µg/m³)`,
             dataIndex: 'pm25',
             key: 'pm25',
             render: (text) => <span style={{ fontWeight: 'bold', color: text > 37 ? '#ff4d4f' : '#52c41a' }}>{text}</span>,
@@ -35,12 +37,12 @@ const TableView = ({ data }) => {
             key: 'pm10',
         },
         {
-            title: 'อุณหภูมิ (°C)',
+            title: `${t.temperature} (°C)`,
             dataIndex: 'temp',
             key: 'temp',
         },
         {
-            title: 'ความชื้น (%)',
+            title: `${t.humidity} (%)`,
             dataIndex: 'humidity',
             key: 'humidity',
         },
