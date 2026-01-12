@@ -10,6 +10,37 @@ import { FireFilled, CloudFilled, SmileFilled, MehFilled, FrownFilled } from '@a
 
 const { Title, Text } = Typography;
 
+const HealthAdvisoryCard = ({ pm25 }) => {
+    const { t } = useLanguage();
+
+    // Helper to determine status color and icon
+    const getStatusInfo = (val) => {
+        if (val === undefined || val === null) return { color: '#d9d9d9', icon: <MehFilled />, text: 'No Data' };
+        if (val <= 25) return { color: '#52c41a', icon: <SmileFilled />, text: t.adviceExcellent };
+        if (val <= 50) return { color: '#faad14', icon: <MehFilled />, text: t.adviceGood }; // Adjusted thresholds to match previous logic logic
+        if (val <= 100) return { color: '#ff4d4f', icon: <FrownFilled />, text: t.adviceModerate };
+        return { color: '#722ed1', icon: <FrownFilled />, text: t.adviceHazardous };
+    };
+
+    const info = getStatusInfo(pm25);
+
+    return (
+        <Card style={{ borderRadius: '15px', marginBottom: '20px', borderTop: `6px solid ${info.color}`, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+            <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                <div style={{ fontSize: '48px', color: info.color, marginBottom: '10px' }}>
+                    {info.icon}
+                </div>
+                <Title level={3} style={{ margin: 0, fontFamily: 'Kanit, sans-serif' }}>
+                    PM2.5: {pm25} µg/m³
+                </Title>
+                <Text type="secondary" style={{ fontSize: '16px', fontFamily: 'Kanit, sans-serif' }}>
+                    {info.text}
+                </Text>
+            </div>
+        </Card>
+    );
+};
+
 const StatusSection = ({ title, data }) => {
     const { t } = useLanguage();
     const { pm25, temp, humidity } = data || {};
@@ -25,61 +56,56 @@ const StatusSection = ({ title, data }) => {
     const currentStatus = getStatus(pm25);
 
     return (
-        <Card title={<Title level={4} style={{ margin: 0, fontFamily: 'Kanit, sans-serif' }}>{title}</Title>} style={{ borderRadius: '15px', marginBottom: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-            <Row gutter={[16, 16]} justify="center">
+        <Card title={<Title level={4} style={{ margin: 0, fontFamily: 'Kanit, sans-serif', fontSize: '1.2rem' }}>{title}</Title>} style={{ borderRadius: '15px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '12px' }}>
+            <Row gutter={[8, 8]} justify="center">
                 {/* PM2.5 Card */}
                 <Col xs={24} sm={8}>
-                    <Card hoverable bordered={false} style={{ textAlign: 'center', background: 'transparent', boxShadow: 'none' }}>
-                        <Title level={5} style={{ fontFamily: 'Kanit, sans-serif' }}>{t.pm25Value}</Title>
+                    <Card hoverable bordered={false} style={{ textAlign: 'center', background: 'transparent', boxShadow: 'none' }} bodyStyle={{ padding: '0px' }}>
+                        <Title level={5} style={{ fontFamily: 'Kanit, sans-serif', marginBottom: '5px' }}>{t.pm25Value}</Title>
                         <Progress
                             type="dashboard"
                             percent={pm25 ? Math.min(((pm25) / 100) * 100, 100) : 0}
                             strokeColor={currentStatus.color}
-                            width={120}
+                            width={100}
                             strokeWidth={10}
                             format={() => (
                                 <div style={{ color: currentStatus.color, fontFamily: 'Kanit, sans-serif' }}>
-                                    <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{pm25 !== undefined ? pm25 : '-'}</div>
-                                    <div style={{ fontSize: '12px' }}>µg/m³</div>
+                                    <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{pm25 !== undefined ? pm25 : '-'}</div>
+                                    <div style={{ fontSize: '10px' }}>µg/m³</div>
                                 </div>
                             )}
                         />
-                        <div style={{ marginTop: '10px' }}>
-                            {pm25 <= 25 && <SmileFilled style={{ fontSize: '24px', color: '#52c41a', marginRight: '8px' }} />}
-                            {pm25 > 25 && pm25 <= 50 && <MehFilled style={{ fontSize: '24px', color: '#faad14', marginRight: '8px' }} />}
-                            {pm25 > 50 && <FrownFilled style={{ fontSize: '24px', color: '#ff4d4f', marginRight: '8px' }} />}
-                            <Text strong style={{ fontSize: '16px', color: currentStatus.color, fontFamily: 'Kanit, sans-serif' }}>
+                        <div style={{ marginTop: '5px' }}>
+                            <Text strong style={{ fontSize: '14px', color: currentStatus.color, fontFamily: 'Kanit, sans-serif' }}>
                                 {currentStatus.text}
                             </Text>
                         </div>
                     </Card>
                 </Col>
 
-                {/* Temperature Card */}
-                <Col xs={24} sm={8}>
-                    <Card hoverable bordered={false} style={{ textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: 'transparent', boxShadow: 'none' }}>
-                        <Title level={5} style={{ fontFamily: 'Kanit, sans-serif' }}>
-                            <FireFilled style={{ color: '#ff4d4f', marginRight: '8px' }} />
+                {/* Temperature Card - Side by side on mobile */}
+                <Col xs={12} sm={8}>
+                    <Card hoverable bordered={false} style={{ textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: 'transparent', boxShadow: 'none' }} bodyStyle={{ padding: '10px' }}>
+                        <Title level={5} style={{ fontFamily: 'Kanit, sans-serif', fontSize: '14px', marginBottom: '5px' }}>
+                            <FireFilled style={{ color: '#ff4d4f', marginRight: '4px' }} />
                             {t.temperature}
                         </Title>
-                        <div className="responsive-stat-value" style={{ color: '#1890ff', fontFamily: 'Kanit, sans-serif' }}>
+                        <div className="responsive-stat-value" style={{ color: '#1890ff', fontFamily: 'Kanit, sans-serif', fontSize: '18px', margin: '5px 0' }}>
                             {temp !== undefined ? temp : '-'} °C
                         </div>
-                        <Text type="secondary" style={{ fontFamily: 'Kanit, sans-serif' }}>{t.realtime}</Text>
                     </Card>
                 </Col>
 
-                {/* Humidity Card */}
-                <Col xs={24} sm={8}>
-                    <Card hoverable bordered={false} style={{ textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: 'transparent', boxShadow: 'none' }}>
-                        <Title level={5} style={{ fontFamily: 'Kanit, sans-serif' }}>
-                            <CloudFilled style={{ color: '#13c2c2', marginRight: '8px' }} />
+                {/* Humidity Card - Side by side on mobile */}
+                <Col xs={12} sm={8}>
+                    <Card hoverable bordered={false} style={{ textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: 'transparent', boxShadow: 'none' }} bodyStyle={{ padding: '10px' }}>
+                        <Title level={5} style={{ fontFamily: 'Kanit, sans-serif', fontSize: '14px', marginBottom: '5px' }}>
+                            <CloudFilled style={{ color: '#13c2c2', marginRight: '4px' }} />
                             {t.humidity}
                         </Title>
-                        <div className="responsive-stat-value" style={{ color: '#13c2c2' }}>
+                        <div className="responsive-stat-value" style={{ color: '#13c2c2', fontFamily: 'Kanit, sans-serif', fontSize: '18px', margin: '5px 0' }}>
                             {humidity !== undefined ? humidity : '-'} %
                         </div>
-                        <Text type="secondary">{t.realtime}</Text>
                     </Card>
                 </Col>
             </Row >
@@ -87,45 +113,53 @@ const StatusSection = ({ title, data }) => {
     );
 };
 
-const HealthAdvisoryCard = ({ pm25 }) => {
+const HeroGauge = ({ pm25, temp }) => {
     const { t } = useLanguage();
-    let bg = '#52c41a';
-    let text = t.excellent;
-    let advice = t.adviceExcellent;
-    let icon = <SmileFilled style={{ fontSize: '48px', color: 'white' }} />;
 
-    if (pm25 > 15 && pm25 <= 25) {
-        bg = '#faad14';
-        text = t.good;
-        advice = t.adviceGood;
-        icon = <MehFilled style={{ fontSize: '48px', color: 'white' }} />;
-    } else if (pm25 > 25 && pm25 <= 37.5) {
-        bg = '#fa8c16';
-        text = t.moderate;
-        advice = t.adviceModerate;
-        icon = <MehFilled style={{ fontSize: '48px', color: 'white' }} />;
-    } else if (pm25 > 37.5) {
-        bg = '#ff4d4f';
-        text = t.unhealthy;
-        advice = t.adviceUnhealthy;
-        icon = <FrownFilled style={{ fontSize: '48px', color: 'white' }} />;
-    }
+    const getStatus = (val) => {
+        if (val === undefined || val === null) return { color: '#d9d9d9', text: 'No Data' };
+        if (val <= 15) return { color: '#52c41a', text: t.excellent };
+        if (val <= 37) return { color: '#faad14', text: t.moderate };
+        if (val <= 75) return { color: '#ff4d4f', text: t.unhealthy };
+        return { color: '#722ed1', text: t.hazardous };
+    };
+
+    const status = getStatus(pm25);
 
     return (
-        <Card style={{ backgroundColor: bg, borderRadius: '15px', marginBottom: '20px', border: 'none' }} bodyStyle={{ padding: '24px' }}>
-            <Row align="middle" gutter={16}>
-                <Col flex="60px">
-                    {icon}
-                </Col>
-                <Col flex="auto">
-                    <Title level={3} style={{ color: 'white', margin: 0, fontFamily: 'Kanit, sans-serif' }}>
-                        คุณภาพอากาศโดยรวม: {text}
-                    </Title>
-                    <Text style={{ color: 'white', fontSize: '18px', fontFamily: 'Kanit, sans-serif' }}>
-                        {advice} (PM2.5: {pm25})
+        <Card style={{ borderRadius: '20px', marginBottom: '20px', boxShadow: '0 10px 20px rgba(0,0,0,0.05)', border: 'none' }} bodyStyle={{ padding: '30px 20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ position: 'relative', marginBottom: '10px' }}>
+                    <Progress
+                        type="circle"
+                        percent={pm25 ? Math.min((pm25 / 100) * 100, 100) : 0}
+                        strokeColor={status.color}
+                        strokeWidth={12}
+                        width={220}
+                        format={() => null} // Custom content below
+                    />
+                    <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        textAlign: 'center',
+                        color: status.color,
+                        fontFamily: 'Kanit, sans-serif'
+                    }}>
+                        <div style={{ fontSize: '48px', fontWeight: 'bold', lineHeight: '1' }}>{pm25 || '-'}</div>
+                        <div style={{ fontSize: '16px', color: '#8c8c8c' }}>µg/m³</div>
+                        <div style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '5px' }}>{status.text}</div>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px', backgroundColor: '#f5f5f5', padding: '10px 20px', borderRadius: '50px' }}>
+                    <FireFilled style={{ color: '#ff4d4f', fontSize: '20px', marginRight: '10px' }} />
+                    <Text style={{ fontSize: '18px', fontFamily: 'Kanit, sans-serif' }}>
+                        {t.temperature}: <b>{temp || '-'} °C</b>
                     </Text>
-                </Col>
-            </Row>
+                </div>
+            </div>
         </Card>
     );
 };
@@ -156,6 +190,12 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
 
     // Prepare data for the single-stream chart (Last 20 readings)
     const chartData = historyData ? historyData.slice(-20) : [];
+
+    // Calculate average temp
+    const temp1 = parseFloat(device1?.temp) || 0;
+    const temp2 = parseFloat(device2?.temp) || 0;
+    const validTemps = [device1?.temp, device2?.temp].filter(t => t !== undefined && t !== null).length;
+    const averageTemp = validTemps > 0 ? ((temp1 + temp2) / validTemps).toFixed(1) : '-';
 
     return (
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>

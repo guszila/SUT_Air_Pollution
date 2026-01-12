@@ -1,7 +1,7 @@
 // Build update: 22/12/2025
 import React, { useState, useEffect, useRef } from 'react';
 import { Layout, Typography, Menu, Spin, Space, notification, Card, Row, Col, Badge, Drawer, Button, ConfigProvider, theme, Avatar, Dropdown, Modal } from 'antd';
-import { DashboardOutlined, TableOutlined, GlobalOutlined, MenuOutlined, EnvironmentOutlined, CheckCircleOutlined, HomeOutlined, SettingOutlined, UserOutlined, LogoutOutlined } from '@ant-design/icons';
+import { DashboardOutlined, TableOutlined, GlobalOutlined, MenuOutlined, EnvironmentOutlined, CheckCircleOutlined, HomeOutlined, SettingOutlined, UserOutlined, LogoutOutlined, IdcardOutlined, BarChartOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import DashboardView from './components/DashboardView';
 import TableView from './components/TableView';
@@ -53,6 +53,13 @@ const AirDashboard = () => {
       try {
         if (window.liff) {
           await window.liff.init({ liffId: "2008874361-7p7NpOmA" });
+
+          // Auto Login if in LINE Client
+          if (window.liff.isInClient() && !window.liff.isLoggedIn()) {
+            window.liff.login();
+            return; // Stop execution to wait for login redirect
+          }
+
           if (window.liff.isLoggedIn()) {
             const profile = await window.liff.getProfile();
             setUserProfile(profile);
@@ -308,30 +315,13 @@ const AirDashboard = () => {
     },
   ] : [
     {
-      key: 'welcome',
-      label: 'Welcome to SUT Air',
-      disabled: true,
-      style: { cursor: 'default', textAlign: 'center', fontWeight: 'bold' }
-    },
-    {
-      key: 'login',
+      key: 'login-trigger',
       label: (
-        <Button
-          type="primary"
-          block
-          style={{ backgroundColor: '#00B900', borderColor: '#00B900' }}
-          onClick={handleLogin}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg"
-              alt="LINE"
-              style={{ width: '20px', height: '20px', marginRight: '8px' }}
-            />
-            Log in with LINE
-          </div>
-        </Button>
+        <div onClick={(e) => { e.preventDefault(); handleLogin(); }}>
+          Log in with LINE
+        </div>
       ),
+      icon: <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" style={{ width: '20px', height: '20px' }} />,
     }
   ];
 
@@ -341,16 +331,112 @@ const AirDashboard = () => {
     switch (currentView) {
       case 'home':
         return <DashboardView mode="home" device1={device1} device2={device2} historyData={historyData} dailyStats={dailyStats} averagePM25={averagePM25} timeSeriesData={timeSeriesData} />;
+      case 'map':
+        return (
+          <div style={{ height: 'calc(100vh - 160px)', width: '100%' }}>
+            <AirMap device1={device1} device2={device2} dailyStats={dailyStats} />
+          </div>
+        );
+      case 'profile':
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', fontFamily: 'Kanit, sans-serif' }}>
+            <Card
+              bordered={false}
+              style={{
+                width: '100%',
+                maxWidth: 400,
+                borderRadius: '20px',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                textAlign: 'center',
+                overflow: 'hidden',
+                position: 'relative'
+              }}
+              bodyStyle={{ padding: 0 }}
+            >
+              {/* Gear Icon Top Right */}
+              <div style={{ position: 'absolute', top: '15px', right: '15px', zIndex: 10 }}>
+                <Button
+                  type="text"
+                  shape="circle"
+                  icon={<SettingOutlined style={{ fontSize: '24px', color: '#8c8c8c' }} />}
+                  onClick={() => setCurrentView('settings')}
+                />
+              </div>
+
+              {userProfile ? (
+                <>
+                  <div style={{
+                    background: 'linear-gradient(135deg, #f97316 0%, #ff8c00 100%)',
+                    padding: '40px 20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                  }}>
+                    <Avatar
+                      size={100}
+                      src={userProfile.pictureUrl}
+                      icon={<UserOutlined />}
+                      style={{
+                        backgroundColor: '#fff',
+                        color: '#f97316',
+                        border: '4px solid #fff',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ padding: '20px' }}>
+                    <Title level={3} style={{ margin: 0, color: '#333', fontFamily: 'Kanit, sans-serif' }}>{userProfile.displayName}</Title>
+                    <Text type="secondary" style={{ fontFamily: 'Kanit, sans-serif' }}>User ID: {userProfile.userId?.substring(0, 10)}...</Text>
+                    <Divider />
+
+                    <div style={{ paddingBottom: '10px' }}>
+                      <Button type="primary" danger icon={<LogoutOutlined />} block size="large" onClick={handleLogout} style={{ borderRadius: '10px', marginBottom: '15px' }}>
+                        {t.logout || "Logout"}
+                      </Button>
+
+                      <Button
+                        icon={<SettingOutlined />}
+                        block
+                        size="large"
+                        onClick={() => setCurrentView('settings')}
+                        style={{ borderRadius: '10px' }}
+                      >
+                        {t.settings || "Settings"}
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div style={{ padding: '30px 20px', textAlign: 'center' }}>
+                  <div style={{ marginBottom: '20px' }}>
+                    <img src="/sut_logo.png" alt="SUT" style={{ height: '80px', objectFit: 'contain' }} />
+                  </div>
+                  <Title level={4} style={{ marginBottom: '8px' }}>Welcome to SUT Air</Title>
+                  <Text type="secondary">Please log in to access full features</Text>
+                  <div style={{ marginTop: '30px' }}>
+                    <Button
+                      type="primary"
+                      block
+                      size="large"
+                      style={{ backgroundColor: '#00B900', borderColor: '#00B900', height: '50px', borderRadius: '10px', fontSize: '16px', fontWeight: 'bold' }}
+                      onClick={handleLogin}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" style={{ width: '24px', height: '24px', marginRight: '10px' }} />
+                        Log in with LINE
+                      </div>
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </Card>
+          </div>
+        );
       case 'dashboard':
         return <DashboardView mode="dashboard" device1={device1} device2={device2} timeSeriesData={timeSeriesData} averagePM25={averagePM25} dailyStats={dailyStats} />;
       case 'table':
-        return <TableView data={historyData} />;
-      case 'map':
-        return <AirMap
-          device1={device1}
-          device2={device2}
-          dailyStats={dailyStats}
-        />;
+        return <TableView data={historyData} onSettingsClick={() => setCurrentView('settings')} />;
       case 'settings':
         return <Settings />;
       default:
@@ -360,30 +446,31 @@ const AirDashboard = () => {
 
   const navItems = [
     { label: t.home, key: 'home', icon: <HomeOutlined /> },
-    { label: t.dashboard, key: 'dashboard', icon: <DashboardOutlined /> },
+    { key: 'dashboard', icon: <BarChartOutlined />, label: t.dashboard },
     { key: 'table', icon: <TableOutlined />, label: t.table },
-    { key: 'map', icon: <GlobalOutlined />, label: t.map },
-    { key: 'settings', icon: <SettingOutlined />, label: t.settings },
+    { key: 'map', icon: <EnvironmentOutlined />, label: t.map },
   ];
 
   return (
     <ConfigProvider theme={{
       algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
       token: {
-        fontFamily: 'Kanit, sans-serif'
+        fontFamily: 'Anakotmai, sans-serif'
       }
     }}>
-      <Layout style={{ minHeight: '100vh', fontFamily: 'Kanit, sans-serif' }}>
+      <Layout style={{ minHeight: '100vh', fontFamily: 'Anakotmai, sans-serif' }}>
         <Header className="glass-header" style={{
           position: 'fixed',
-          zIndex: 10,
+          zIndex: 2000,
           width: '100%',
-          height: '80px',
+          height: '64px',
           top: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0 16px',
+          backgroundColor: '#f97316', // Orange Theme
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
           transition: 'transform 0.3s ease-in-out',
           transform: showHeader ? 'translateY(0)' : 'translateY(-100%)'
         }}>
@@ -396,13 +483,14 @@ const AirDashboard = () => {
               src="/sut_logo.png"
               alt="SUT Air Pollution Logo"
               style={{
-                height: '70px',
+                height: '50px',
                 marginRight: '12px',
-                objectFit: 'contain'
+                objectFit: 'contain',
+                filter: 'brightness(0) invert(1)' // Make logo white if possible, or keep original
               }}
             />
-            <Title level={4} style={{ color: 'white', margin: 0, marginRight: '20px', whiteSpace: 'nowrap', fontSize: '1.2rem', fontFamily: 'Kanit, sans-serif' }}>
-              <span className="desktop-only">{t.appTitle}</span>
+            <Title level={4} style={{ color: 'white', margin: 0, marginRight: '20px', whiteSpace: 'nowrap', fontSize: '1.2rem', fontFamily: 'Anakotmai, sans-serif' }}>
+              SUT Air Pollution
             </Title>
           </div>
 
@@ -415,24 +503,14 @@ const AirDashboard = () => {
               selectedKeys={[currentView]}
               items={navItems}
               onSelect={({ key }) => setCurrentView(key)}
-              style={{ width: '100%', justifyContent: 'flex-end', borderBottom: 'none', fontFamily: 'Kanit, sans-serif' }}
+              style={{ width: '100%', justifyContent: 'flex-end', borderBottom: 'none', fontFamily: 'Anakotmai, sans-serif' }}
               disabledOverflow={true}
             />
           </div>
 
-          {/* Mobile Hamburger Button */}
-          <div className="mobile-visible">
-            <Button
-              type="primary"
-              icon={<MenuOutlined />}
-              onClick={() => setMobileMenuOpen(true)}
-              style={{ background: 'transparent', border: 'none', fontSize: '18px' }}
-            />
-          </div>
+          {/* Hamburger Menu Removed */}
 
-          <div className="header-time" style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginLeft: '16px', whiteSpace: 'nowrap', fontFamily: 'Kanit, sans-serif' }}>
-            {currentTime.toLocaleTimeString('th-TH')}
-          </div>
+          {/* Time Removed as requested */}
 
           <Dropdown menu={{ items: profileMenuItems }} placement="bottomRight" arrow trigger={['click']}>
             <div style={{ marginLeft: '16px', display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
@@ -444,7 +522,10 @@ const AirDashboard = () => {
                   </Text>
                 </>
               ) : (
-                <Avatar icon={<UserOutlined />} size="large" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Avatar icon={<UserOutlined />} size="large" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
+                  <Text className="mobile-only" style={{ color: 'white', marginLeft: '6px', fontSize: '12px', fontFamily: 'Kanit, sans-serif' }}>เข้าสู่ระบบ</Text>
+                </div>
               )}
             </div>
           </Dropdown>
@@ -516,7 +597,57 @@ const AirDashboard = () => {
           </div>
         </Content>
 
-        <Footer style={{ textAlign: 'center', padding: '20px 10px', fontFamily: 'Kanit, sans-serif' }}>
+        {/* Bottom Navigation for Mobile */}
+        <div className="mobile-bottom-nav" style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          width: '100%',
+          // Safe area padding for iPhone
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          height: 'calc(60px + env(safe-area-inset-bottom))',
+          backgroundColor: isDarkMode ? '#1f1f1f' : '#ffffff',
+          justifyContent: 'space-around',
+          alignItems: 'center', // Align items vertically
+          borderTop: `1px solid ${isDarkMode ? '#303030' : '#e8e8e8'}`,
+          zIndex: 1000,
+          boxShadow: '0 -2px 10px rgba(0,0,0,0.05)',
+          display: window.innerWidth <= 768 ? 'flex' : 'none'
+        }}>
+          <style>{`
+             @media (min-width: 769px) { .mobile-bottom-nav { display: none !important; } }
+             @media (max-width: 768px) { 
+                .desktop-visible { display: none !important; } 
+                .mobile-visible { display: block !important; } 
+                .mobile-bottom-nav { display: flex !important; } 
+             }
+             /* Adjust active state style */
+             .nav-item-active { color: #f97316 !important; }
+             .nav-item { color: #8c8c8c; }
+           `}</style>
+
+          <div onClick={() => setCurrentView('home')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', height: '100%', justifyContent: 'center' }} className={currentView === 'home' ? 'nav-item-active' : 'nav-item'}>
+            <HomeOutlined style={{ fontSize: '24px' }} />
+            <span style={{ fontSize: '10px', marginTop: '2px', fontFamily: 'Kanit' }}>{t.home || 'Home'}</span>
+          </div>
+
+          <div onClick={() => setCurrentView('dashboard')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', height: '100%', justifyContent: 'center' }} className={currentView === 'dashboard' ? 'nav-item-active' : 'nav-item'}>
+            <BarChartOutlined style={{ fontSize: '24px' }} />
+            <span style={{ fontSize: '10px', marginTop: '2px', fontFamily: 'Kanit' }}>{t.dashboard || 'Dashboard'}</span>
+          </div>
+
+          <div onClick={() => setCurrentView('map')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', height: '100%', justifyContent: 'center' }} className={currentView === 'map' ? 'nav-item-active' : 'nav-item'}>
+            <EnvironmentOutlined style={{ fontSize: '24px' }} />
+            <span style={{ fontSize: '10px', marginTop: '2px', fontFamily: 'Kanit' }}>{t.map || 'Map'}</span>
+          </div>
+
+          <div onClick={() => setCurrentView('profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', height: '100%', justifyContent: 'center' }} className={currentView === 'profile' ? 'nav-item-active' : 'nav-item'}>
+            <UserOutlined style={{ fontSize: '24px' }} />
+            <span style={{ fontSize: '10px', marginTop: '2px', fontFamily: 'Kanit' }}>{t.profile || 'Profile'}</span>
+          </div>
+        </div>
+
+        <Footer style={{ textAlign: 'center', padding: '20px 10px', fontFamily: 'Kanit, sans-serif', paddingBottom: '80px' }}>
           © 2025 SUT Air Pollution
         </Footer>
       </Layout>

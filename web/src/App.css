@@ -1,4 +1,28 @@
 /* Global Font */
+@font-face {
+  font-family: 'Anakotmai';
+  src: url('./assets/fonts/anakotmai-light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Anakotmai';
+  src: url('./assets/fonts/anakotmai-medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Anakotmai';
+  src: url('./assets/fonts/anakotmai-bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Global Reset */
 body,
 h1,
@@ -21,9 +45,13 @@ dd {
 }
 
 body {
-  font-family: 'Kanit', sans-serif;
+  font-family: 'Anakotmai', sans-serif;
   overflow-x: hidden;
-  /* Prevent horizontal scroll */
+}
+
+/* Enforce font on ALL elements */
+* {
+  font-family: 'Anakotmai', sans-serif !important;
 }
 
 /* Dark Mode Global Styles */

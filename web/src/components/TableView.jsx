@@ -1,8 +1,9 @@
 import React from 'react';
-import { Table } from 'antd';
+import { Table, Card, Button } from 'antd';
 import { useLanguage } from '../context/LanguageContext';
+import { SettingOutlined } from '@ant-design/icons';
 
-const TableView = ({ data }) => {
+const TableView = ({ data, onSettingsClick }) => {
     const { t } = useLanguage();
     const columns = [
         {
@@ -49,14 +50,29 @@ const TableView = ({ data }) => {
     ];
 
     return (
-        <Table
-            dataSource={data}
-            columns={columns}
-            rowKey={(record, index) => index}
-            pagination={{ pageSize: 10 }}
-            scroll={{ x: true }}
-            style={{ fontFamily: 'Kanit, sans-serif' }}
-        />
+        <Card
+            title={
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>{t.table}</span>
+                    <Button
+                        type="text"
+                        icon={<SettingOutlined style={{ fontSize: '20px' }} />}
+                        onClick={onSettingsClick}
+                    />
+                </div>
+            }
+            style={{ borderRadius: '15px', marginTop: '10px' }}
+            bodyStyle={{ padding: '0' }}
+        >
+            <Table
+                dataSource={data}
+                columns={columns}
+                rowKey={(record, index) => index}
+                pagination={{ pageSize: 15 }}
+                scroll={{ x: true }}
+                style={{ fontFamily: 'Kanit, sans-serif' }}
+            />
+        </Card>
     );
 };
 
