@@ -1,0 +1,174 @@
+// ========== CONFIG ==========
+const SHEET_NAME = "air_quality_data";
+const LOC_SHEET_NAME = "Device_Locations"; 
+const CHANNEL_ACCESS_TOKEN = "r6HgHzteNFp6eZdFaJ7PVIAOewqv+jqzYCK+MpiHQqb6QVfB6fm7CYJ0PTOMQHEXXuqrO+MrMY6NCM1odCYP89TY6JiGuXtq6zh3ZrHygrXc5yatOgnMo0mMUsw6Dv9AEVRZaYmfOMtifhVyzG+szwdB04t89/1O/w1cDnyilFU=";
+const MAX_SERVICE_DISTANCE = 5000; 
+
+function ok() {
+  return ContentService.createTextOutput("OK").setMimeType(ContentService.MimeType.TEXT);
+}
+
+// ======================================
+// 1) รับข้อมูลจาก ESP32 (GET) - บันทึกอย่างเดียว
+// ======================================
+function doGet(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("air_quality_data");
+  const now = new Date();
+  const tz = Session.getScriptTimeZone();
+  
+  // จัดเรียงข้อมูลลงแถวใหม่ตามลำดับคอลัมน์ A ถึง H
+  sheet.appendRow([
+    Utilities.formatDate(now, tz, "dd/MM/yyyy"), // A: date
+    Utilities.formatDate(now, tz, "HH:mm:ss"),   // B: time
+    e.parameter.device || "Unknown",             // C: device
+    e.parameter.pm1 || "0",                      // D: pm1
+    e.parameter.pm2_5 || "0",                    // E: pm2_5
+    e.parameter.pm10 || "0",                     // F: pm10
+    e.parameter.temp || "0",                     // G: temp
+    e.parameter.hum || "0"                       // H: humidity
+  ]);
+  
+  return ContentService.createTextOutput("OK");
+}
+
+// ======================================
+// 2) LINE Webhook (POST) - สำหรับตอบแชท/เช็คฝุ่นใกล้ตัว
+// ======================================
+function doPost(e) {
+  try {
+    const body = e.postData ? e.postData.contents : "{}";
+    const json = JSON.parse(body);
+    if (!json.events) return ok();
+
+    json.events.forEach(event => {
+      if (event.type === "message") {
+        if (event.message.type === "text") {
+          const fullText = (event.message.text || "").trim();
+          const commands = ["AQ_NOW", "aq_now", "ค่าฝุ่น", "สภาพอากาศ", "เช็คฝุ่นใกล้ตัว"];
+          
+          if (fullText === "เช็คฝุ่นใกล้ตัว" || fullText === "ส่งพิกัด") {
+            sendReply(event.replyToken, "📍 กรุณากดปุ่มบวก (+) ด้านล่างซ้าย\nแล้วเลือก 'ตำแหน่งที่ตั้ง' เพื่อแชร์พิกัดปัจจุบันให้ระบบหาเครื่องที่ใกล้ที่สุดครับ");
+            return;
+          }
+
+          let deviceName = "";
+          if (commands.some(cmd => fullText.startsWith(cmd))) {
+            const parts = fullText.split(/\s+/); 
+            if (parts.length > 1) { deviceName = parts.slice(1).join('_').toUpperCase(); }
+            replyWithLatestData(event.replyToken, deviceName);
+          }
+        } else if (event.message.type === "location") {
+          const userLat = event.message.latitude;
+          const userLon = event.message.longitude;
+          const closestDeviceName = findClosestDevice(userLat, userLon);
+          if (closestDeviceName) {
+            replyWithLatestData(event.replyToken, closestDeviceName, userLat, userLon);
+          } else {
+            sendReply(event.replyToken, `ไม่พบเครื่องในระยะ ${MAX_SERVICE_DISTANCE/1000} กม. ครับ`);
+          }
+        }
+      }
+    });
+    return ok();
+  } catch (err) { return ok(); }
+}
+
+// ======================================
+// 3) ฟังก์ชันดึงข้อมูลล่าสุดและตอบกลับ (มีหน่วย µg/m³ ครบ)
+// ======================================
+function replyWithLatestData(replyToken, deviceFilter, userLat, userLon) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  const dataRows = sheet.getDataRange().getValues().slice(1); 
+  const tz = Session.getScriptTimeZone();
+  
+  if (dataRows.length === 0) {
+    sendReply(replyToken, "ยังไม่มีข้อมูลจากเซนเซอร์เลยครับ");
+    return;
+  }
+  
+  const filteredData = dataRows.filter(row => {
+    const rowDeviceName = row[3] ? row[3].toString().trim().toUpperCase() : ''; 
+    return !deviceFilter || (rowDeviceName === deviceFilter.toUpperCase());
+  });
+
+  if (filteredData.length === 0) {
+    sendReply(replyToken, `ไม่พบข้อมูลสำหรับอุปกรณ์: ${deviceFilter} ครับ`);
+    return;
+  }
+  
+  const latestRow = filteredData[filteredData.length - 1]; 
+
+  function cleanData(val, format) {
+    if (!val) return "";
+    var d = (val instanceof Date) ? val : new Date(val);
+    if (isNaN(d.getTime())) return val;
+    return Utilities.formatDate(d, tz, format);
+  }
+
+  const dateStr = cleanData(latestRow[0], "dd/MM/yyyy"); 
+  const timeStr = cleanData(latestRow[1], "HH:mm:ss");   
+  const device = latestRow[3];                          
+  const pm1 = latestRow[4];                             
+  const pm2_5 = latestRow[5];                           
+  const pm10 = latestRow[6];                            
+  const temp = latestRow[7];                            
+  const hum = latestRow[8];                            
+  const pm2_5_level = getAQILevel(pm2_5);
+
+  let distanceText = "";
+  if (userLat && userLon) {
+      const locSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(LOC_SHEET_NAME);
+      const locData = locSheet.getDataRange().getValues().slice(1);
+      const deviceLoc = locData.find(row => row[0].toUpperCase() === device.toString().toUpperCase()); 
+      if (deviceLoc) {
+          const distanceMeters = calculateDistance(userLat, userLon, deviceLoc[1], deviceLoc[2]);
+          distanceText = distanceMeters >= 1000 ? `(${(distanceMeters/1000).toFixed(2)} กม.)` : `(${Math.round(distanceMeters)} ม.)`;
+      }
+  }
+  
+  const msg = `✅ ข้อมูลอากาศล่าสุด\n📍 อุปกรณ์: ${device} ${distanceText}\n📅 ${dateStr} ${timeStr}\n\n` +
+              `🌫 PM2.5: ${pm2_5} µg/m³ (${pm2_5_level})\n` +
+              `🌫 PM10: ${pm10} µg/m³\n` +
+              `🌫 PM1.0: ${pm1} µg/m³\n\n` +
+              `🌡 Temp: ${temp} °C\n` +
+              `💧 Hum: ${hum} %`;
+              
+  sendReply(replyToken, msg);
+}
+
+function sendReply(replyToken, text) {
+  UrlFetchApp.fetch("https://api.line.me/v2/bot/message/reply", {
+    method: "post", contentType: "application/json",
+    headers: { "Authorization": "Bearer " + CHANNEL_ACCESS_TOKEN },
+    payload: JSON.stringify({ replyToken: replyToken, messages: [{ type: "text", text: text }] })
+  });
+}
+
+// --- Helpers ---
+function toRad(degrees) { return degrees * Math.PI / 180; }
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+function findClosestDevice(userLat, userLon) {
+  const locSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(LOC_SHEET_NAME);
+  if (!locSheet) return null;
+  const locData = locSheet.getDataRange().getValues().slice(1);
+  let minDistance = Infinity, closestName = null;
+  locData.forEach(row => {
+    const dist = calculateDistance(userLat, userLon, row[1], row[2]);
+    if (dist < minDistance) { minDistance = dist; closestName = row[0]; }
+  });
+  return minDistance > MAX_SERVICE_DISTANCE ? null : closestName;
+}
+function getAQILevel(pm) {
+  const p = parseFloat(pm);
+  if (p <= 25) return "🟢 ดีมาก";
+  if (p <= 37) return "🟡 ดี";
+  if (p <= 50) return "🟠 ปานกลาง";
+  if (p <= 90) return "🔴 เริ่มมีผลกระทบ";
+  return "🟣 มีผลกระทบต่อสุขภาพ";
+}
