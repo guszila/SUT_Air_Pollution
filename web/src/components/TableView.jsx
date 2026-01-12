@@ -1,0 +1,63 @@
+import React from 'react';
+import { Table } from 'antd';
+import { useLanguage } from '../context/LanguageContext';
+
+const TableView = ({ data }) => {
+    const { t } = useLanguage();
+    const columns = [
+        {
+            title: t.date,
+            dataIndex: 'date',
+            key: 'date',
+        },
+        {
+            title: t.time,
+            dataIndex: 'time',
+            key: 'time',
+        },
+        {
+            title: t.device,
+            dataIndex: 'deviceId',
+            key: 'deviceId',
+            render: (text) => {
+                if (text === 'ESP32_01') return 'อาคารบรรณสาร';
+                if (text === 'ESP32_02') return 'อาคารเรียนรวม 1';
+                return text;
+            }
+        },
+        {
+            title: `${t.pm25Value} (µg/m³)`,
+            dataIndex: 'pm25',
+            key: 'pm25',
+            render: (text) => <span style={{ fontWeight: 'bold', color: text > 37 ? '#ff4d4f' : '#52c41a' }}>{text}</span>,
+        },
+        {
+            title: 'ค่า PM10 (µg/m³)',
+            dataIndex: 'pm10',
+            key: 'pm10',
+        },
+        {
+            title: `${t.temperature} (°C)`,
+            dataIndex: 'temp',
+            key: 'temp',
+        },
+        {
+            title: `${t.humidity} (%)`,
+            dataIndex: 'humidity',
+            key: 'humidity',
+        },
+    ];
+
+    return (
+        <Table
+            dataSource={data}
+            columns={columns}
+            rowKey={(record, index) => index}
+            pagination={{ pageSize: 10 }}
+            scroll={{ x: true }}
+            style={{ fontFamily: 'Kanit, sans-serif' }}
+        />
+    );
+};
+
+export default TableView;
