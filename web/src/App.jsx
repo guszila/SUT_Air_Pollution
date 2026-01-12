@@ -10,6 +10,7 @@ import Settings from './components/Settings';
 import { useLanguage } from './context/LanguageContext';
 import { useTheme } from './context/ThemeContext';
 import { useSettings } from './context/SettingsContext';
+import ProfileView from './components/ProfileView';
 
 const { Header, Content, Footer } = Layout;
 const { Title, Text } = Typography;
@@ -286,12 +287,17 @@ const AirDashboard = () => {
     }
   };
 
+  const handleUpdateProfile = (newProfile) => {
+    setUserProfile(newProfile);
+    // In a real app, you would also probably save this to a database here
+  };
+
   const profileMenuItems = userProfile ? [
     {
       key: 'user-header',
       label: (
         <div style={{ padding: '4px' }}>
-          <Text strong>{userProfile.displayName}</Text>
+          <Text strong>{userProfile?.displayName || "User"}</Text>
         </div>
       ),
       disabled: true,
@@ -305,6 +311,12 @@ const AirDashboard = () => {
       icon: <UserOutlined />,
       label: 'View Profile',
       onClick: () => setIsProfileModalOpen(true),
+    },
+    {
+      key: 'settings',
+      icon: <SettingOutlined />,
+      label: t.settings || 'Settings',
+      onClick: () => setCurrentView('settings'),
     },
     {
       key: 'logout',
@@ -322,6 +334,12 @@ const AirDashboard = () => {
         </div>
       ),
       icon: <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" style={{ width: '20px', height: '20px' }} />,
+    },
+    {
+      key: 'settings',
+      icon: <SettingOutlined />,
+      label: t.settings || 'Settings',
+      onClick: () => setCurrentView('settings'),
     }
   ];
 
@@ -339,99 +357,14 @@ const AirDashboard = () => {
         );
       case 'profile':
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', fontFamily: 'Kanit, sans-serif' }}>
-            <Card
-              bordered={false}
-              style={{
-                width: '100%',
-                maxWidth: 400,
-                borderRadius: '20px',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-                textAlign: 'center',
-                overflow: 'hidden',
-                position: 'relative'
-              }}
-              bodyStyle={{ padding: 0 }}
-            >
-              {/* Gear Icon Top Right */}
-              <div style={{ position: 'absolute', top: '15px', right: '15px', zIndex: 10 }}>
-                <Button
-                  type="text"
-                  shape="circle"
-                  icon={<SettingOutlined style={{ fontSize: '24px', color: '#8c8c8c' }} />}
-                  onClick={() => setCurrentView('settings')}
-                />
-              </div>
-
-              {userProfile ? (
-                <>
-                  <div style={{
-                    background: 'linear-gradient(135deg, #f97316 0%, #ff8c00 100%)',
-                    padding: '40px 20px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center'
-                  }}>
-                    <Avatar
-                      size={100}
-                      src={userProfile.pictureUrl}
-                      icon={<UserOutlined />}
-                      style={{
-                        backgroundColor: '#fff',
-                        color: '#f97316',
-                        border: '4px solid #fff',
-                        boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
-                      }}
-                    />
-                  </div>
-
-                  <div style={{ padding: '20px' }}>
-                    <Title level={3} style={{ margin: 0, color: '#333', fontFamily: 'Kanit, sans-serif' }}>{userProfile.displayName}</Title>
-                    <Text type="secondary" style={{ fontFamily: 'Kanit, sans-serif' }}>User ID: {userProfile.userId?.substring(0, 10)}...</Text>
-                    <Divider />
-
-                    <div style={{ paddingBottom: '10px' }}>
-                      <Button type="primary" danger icon={<LogoutOutlined />} block size="large" onClick={handleLogout} style={{ borderRadius: '10px', marginBottom: '15px' }}>
-                        {t.logout || "Logout"}
-                      </Button>
-
-                      <Button
-                        icon={<SettingOutlined />}
-                        block
-                        size="large"
-                        onClick={() => setCurrentView('settings')}
-                        style={{ borderRadius: '10px' }}
-                      >
-                        {t.settings || "Settings"}
-                      </Button>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div style={{ padding: '30px 20px', textAlign: 'center' }}>
-                  <div style={{ marginBottom: '20px' }}>
-                    <img src="/sut_logo.png" alt="SUT" style={{ height: '80px', objectFit: 'contain' }} />
-                  </div>
-                  <Title level={4} style={{ marginBottom: '8px' }}>Welcome to SUT Air</Title>
-                  <Text type="secondary">Please log in to access full features</Text>
-                  <div style={{ marginTop: '30px' }}>
-                    <Button
-                      type="primary"
-                      block
-                      size="large"
-                      style={{ backgroundColor: '#00B900', borderColor: '#00B900', height: '50px', borderRadius: '10px', fontSize: '16px', fontWeight: 'bold' }}
-                      onClick={handleLogin}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" style={{ width: '24px', height: '24px', marginRight: '10px' }} />
-                        Log in with LINE
-                      </div>
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </Card>
-          </div>
+          <ProfileView
+            userProfile={userProfile}
+            onLogout={handleLogout}
+            onSettingsClick={() => setCurrentView('settings')}
+            onTableClick={() => setCurrentView('table')}
+            onUpdateProfile={handleUpdateProfile}
+            onLogin={handleLogin}
+          />
         );
       case 'dashboard':
         return <DashboardView mode="dashboard" device1={device1} device2={device2} timeSeriesData={timeSeriesData} averagePM25={averagePM25} dailyStats={dailyStats} />;
@@ -447,7 +380,6 @@ const AirDashboard = () => {
   const navItems = [
     { label: t.home, key: 'home', icon: <HomeOutlined /> },
     { key: 'dashboard', icon: <BarChartOutlined />, label: t.dashboard },
-    { key: 'table', icon: <TableOutlined />, label: t.table },
     { key: 'map', icon: <EnvironmentOutlined />, label: t.map },
   ];
 
@@ -597,7 +529,9 @@ const AirDashboard = () => {
           </div>
         </Content>
 
-        {/* Bottom Navigation for Mobile */}
+        {/* Bottom Navigation for Mobile */
+          /* Table Item Removed manually from here as well since it was hardcoded or we just check navItems logic if it was dynamic, but effectively we want 4 args in bottom nav: Home, Dashboard, Map, Profile. */
+        }
         <div className="mobile-bottom-nav" style={{
           position: 'fixed',
           bottom: 0,
