@@ -351,8 +351,16 @@ const AirDashboard = () => {
         return <DashboardView mode="home" device1={device1} device2={device2} historyData={historyData} dailyStats={dailyStats} averagePM25={averagePM25} timeSeriesData={timeSeriesData} />;
       case 'map':
         return (
-          <div style={{ height: 'calc(100vh - 160px)', width: '100%' }}>
-            <AirMap device1={device1} device2={device2} dailyStats={dailyStats} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ height: '60vh', width: '100%', minHeight: '400px' }}>
+              <AirMap device1={device1} device2={device2} dailyStats={dailyStats} />
+            </div>
+            <div id="data-table-section">
+              <Text strong style={{ fontSize: '20px', fontFamily: 'Kanit, sans-serif' }}>
+                {t.table || "Data Table"}
+              </Text>
+              <TableView data={historyData} />
+            </div>
           </div>
         );
       case 'profile':
