@@ -35,6 +35,7 @@ export const translations = {
         unhealthy: "เริ่มมีผลกระทบ",
         hazardous: "อันตราย",
         excellent: "ดีมาก",
+        aqiStandardTitle: "เกณฑ์ดัชนีคุณภาพอากาศ (TH AQI)",
 
         // Health Advice
         adviceExcellent: "อากาศดีมาก: เหมาะสำหรับทำกิจกรรมกลางแจ้ง",
@@ -98,6 +99,7 @@ export const translations = {
         unhealthy: "Unhealthy",
         hazardous: "Hazardous",
         excellent: "Excellent",
+        aqiStandardTitle: "Thai AQI Standard",
 
         // Health Advice
         adviceExcellent: "Excellent: Great for outdoor activities.",

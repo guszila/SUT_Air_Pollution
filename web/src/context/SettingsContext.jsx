@@ -6,13 +6,15 @@ export const SettingsProvider = ({ children }) => {
     // Alert Threshold (PM2.5), default 75
     const [alertThreshold, setAlertThreshold] = useState(() => {
         const saved = localStorage.getItem('alertThreshold');
-        return saved ? parseInt(saved, 10) : 75;
+        const parsed = parseInt(saved, 10);
+        return !isNaN(parsed) ? parsed : 75;
     });
 
     // Refresh Interval (ms), default 60000 (1 min)
     const [refreshInterval, setRefreshInterval] = useState(() => {
         const saved = localStorage.getItem('refreshInterval');
-        return saved ? parseInt(saved, 10) : 60000;
+        const parsed = parseInt(saved, 10);
+        return !isNaN(parsed) ? parsed : 60000;
     });
 
     useEffect(() => {

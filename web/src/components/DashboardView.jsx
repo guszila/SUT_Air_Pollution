@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { Card, Row, Col, Typography, Progress, Divider, Table, Tag } from 'antd';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, LabelList } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, LabelList, ComposedChart, Area } from 'recharts';
 
 import { EnvironmentOutlined } from '@ant-design/icons';
 import { FireFilled, CloudFilled, SmileFilled, MehFilled, FrownFilled } from '@ant-design/icons';
@@ -185,6 +185,41 @@ const RankingTable = ({ device1, device2 }) => {
     );
 };
 
+
+
+const AirQualityReferenceTable = () => {
+    const { t } = useLanguage();
+
+    const data = [
+        { key: '1', aqi: '0-25', pm25: '0-15.0', meaning: t.adviceExcellent || 'Excellent', color: '#00B0F0', textColor: '#fff' },
+        { key: '2', aqi: '26-50', pm25: '15.1-25.0', meaning: t.adviceGood || 'Good', color: '#00B050', textColor: '#fff' },
+        { key: '3', aqi: '51-100', pm25: '25.1-37.5', meaning: t.adviceModerate || 'Moderate', color: '#FFC000', textColor: '#000' },
+        { key: '4', aqi: '101-200', pm25: '37.6-75.0', meaning: t.adviceUnhealthy || 'Unhealthy', color: '#F25F55', textColor: '#fff' },
+        { key: '5', aqi: '>200', pm25: '>75.1', meaning: t.adviceHazardous || 'Hazardous', color: '#C00000', textColor: '#fff' },
+    ];
+
+    const columns = [
+        { title: 'AQI', dataIndex: 'aqi', align: 'center', width: 80, render: (text) => <span style={{ fontWeight: 'bold' }}>{text}</span> },
+        { title: 'PM2.5 (µg/m³)', dataIndex: 'pm25', align: 'center', width: 120 },
+        { title: t.status, dataIndex: 'meaning', align: 'left' },
+    ];
+
+    return (
+        <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.aqiStandardTitle || 'Thai AQI Standard'}</span>} style={{ borderRadius: '15px', marginBottom: '20px' }}>
+            <Table
+                dataSource={data}
+                columns={columns}
+                pagination={false}
+                size="small"
+                rowClassName={(record) => 'aqi-row-' + record.key}
+                onRow={(record) => ({
+                    style: { background: record.color, color: record.textColor, fontFamily: 'Kanit' }
+                })}
+            />
+        </Card>
+    );
+};
+
 const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesData, averagePM25, mode = 'home' }) => {
     const { t } = useLanguage();
 
@@ -208,47 +243,20 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                     <StatusSection title={t.library} data={device2} />
 
                     <Row gutter={[16, 16]}>
-                        <Col xs={24} lg={12}>
+                        <Col xs={24} lg={24}>
                             <RankingTable device1={device1} device2={device2} />
                         </Col>
-                        <Col xs={24} lg={12}>
-                            {/* Ranking Table Side - can put chart here or full width below */}
-                            <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.pm25Trend}</span>} style={{ borderRadius: '15px', marginBottom: '20px' }}>
-                                <div style={{ width: '100%', height: 300 }}>
-                                    <ResponsiveContainer>
-                                        <LineChart data={chartData}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="time" style={{ fontFamily: 'Kanit, sans-serif' }} />
-                                            <YAxis label={{ value: 'µg/m³', angle: -90, position: 'insideLeft' }} />
-                                            <Tooltip content={({ active, payload, label }) => {
-                                                if (active && payload && payload.length) {
-                                                    const data = payload[0].payload;
-                                                    return (
-                                                        <div style={{ backgroundColor: '#fff', padding: '10px', border: '1px solid #ccc', borderRadius: '5px', fontFamily: 'Kanit' }}>
-                                                            <p style={{ margin: 0, fontWeight: 'bold' }}>{label}</p>
-                                                            <p style={{ margin: 0, color: (data.deviceId === 'A_Learning_Building_1' || data.deviceId === 'ESP32_02') ? '#1890ff' : '#52c41a' }}>
-                                                                {(data.deviceId === 'A_Learning_Building_1' || data.deviceId === 'ESP32_02') ? t.learningBuilding : t.library}: {data.pm25} µg/m³
-                                                            </p>
-                                                        </div>
-                                                    );
-                                                }
-                                                return null;
-                                            }} />
-                                            <Legend wrapperStyle={{ fontFamily: 'Kanit, sans-serif' }} />
-                                            <Line type="monotone" dataKey="pm25" stroke="#8884d8" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 8 }} />
-                                        </LineChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </Card>
-                        </Col>
+
                     </Row>
+
+                    <AirQualityReferenceTable />
                 </>
             )}
 
             {mode === 'dashboard' && (
                 <>
                     <Row gutter={[16, 16]}>
-                        <Col xs={24} lg={16}>
+                        <Col xs={24} lg={12}>
                             <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.trend}</span>} style={{ borderRadius: '15px' }}>
                                 <div style={{ width: '100%', height: 300 }}>
                                     <ResponsiveContainer>
@@ -292,6 +300,48 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                         </Col>
                     </Row>
 
+
+
+
+                    <Row gutter={[16, 16]}>
+                        <Col xs={24} lg={12}>
+                            <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>Temperature & Humidity Trends</span>} style={{ borderRadius: '15px' }}>
+                                <div style={{ width: '100%', height: 300 }}>
+                                    <ResponsiveContainer>
+                                        <ComposedChart data={timeSeriesData}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis dataKey="time" style={{ fontFamily: 'Kanit, sans-serif' }} />
+                                            <YAxis yAxisId="left" orientation="left" stroke="#ff7a45" label={{ value: 'Temp (°C)', angle: -90, position: 'insideLeft' }} />
+                                            <YAxis yAxisId="right" orientation="right" stroke="#36cfc9" label={{ value: 'Humidity (%)', angle: 90, position: 'insideRight' }} />
+                                            <Tooltip contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit' }} labelStyle={{ fontWeight: 'bold' }} />
+                                            <Legend wrapperStyle={{ fontFamily: 'Kanit, sans-serif' }} />
+                                            <Line yAxisId="left" type="monotone" dataKey="temp_A" name={`Temp (${t.learningBuilding})`} stroke="#ff7a45" dot={false} strokeWidth={2} />
+                                            <Line yAxisId="right" type="monotone" dataKey="humid_A" name={`Humid (${t.learningBuilding})`} stroke="#36cfc9" dot={false} strokeWidth={2} />
+                                        </ComposedChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </Card>
+                        </Col>
+
+                        <Col xs={24} lg={12}>
+                            <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>PM10 Trends</span>} style={{ borderRadius: '15px' }}>
+                                <div style={{ width: '100%', height: 300 }}>
+                                    <ResponsiveContainer>
+                                        <LineChart data={timeSeriesData}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis dataKey="time" style={{ fontFamily: 'Kanit, sans-serif' }} />
+                                            <YAxis stroke="#52c41a" label={{ value: 'PM10 (µg/m³)', angle: -90, position: 'insideLeft' }} />
+                                            <Tooltip contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit' }} labelStyle={{ fontWeight: 'bold' }} />
+                                            <Legend wrapperStyle={{ fontFamily: 'Kanit, sans-serif' }} />
+                                            <Line type="monotone" dataKey="pm10_A" name={`PM10 (${t.learningBuilding})`} stroke="#52c41a" dot={false} strokeWidth={2} />
+                                            <Line type="monotone" dataKey="pm10_B" name={`PM10 (${t.library})`} stroke="#95de64" dot={false} strokeWidth={2} strokeDasharray="5 5" />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </Card>
+                        </Col>
+                    </Row>
+
                     {/* Daily Statistics Bar Chart */}
                     <Card
                         title={<span style={{ fontFamily: 'Kanit, sans-serif', fontSize: '18px' }}>{t.dailyStats}</span>}
@@ -328,8 +378,9 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                         </div>
                     </Card>
                 </>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 };
 

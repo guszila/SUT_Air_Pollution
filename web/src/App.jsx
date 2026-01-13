@@ -197,8 +197,18 @@ const AirDashboard = () => {
             if (!timeMap[timestamp]) {
               timeMap[timestamp] = { timestamp, time: timeLabel, fullDate: item.date };
             }
-            if (key === 'A') timeMap[timestamp].pm25_A = item.pm25;
-            if (key === 'B') timeMap[timestamp].pm25_B = item.pm25;
+            if (key === 'A') {
+              timeMap[timestamp].pm25_A = item.pm25;
+              timeMap[timestamp].pm10_A = item.pm10;
+              timeMap[timestamp].temp_A = item.temp;
+              timeMap[timestamp].humid_A = item.humidity;
+            }
+            if (key === 'B') {
+              timeMap[timestamp].pm25_B = item.pm25;
+              timeMap[timestamp].pm10_B = item.pm10;
+              timeMap[timestamp].temp_B = item.temp;
+              timeMap[timestamp].humid_B = item.humidity;
+            }
           }
         });
       };
@@ -426,7 +436,7 @@ const AirDashboard = () => {
                 height: '50px',
                 marginRight: '12px',
                 objectFit: 'contain',
-                filter: 'brightness(0) invert(1)' // Make logo white if possible, or keep original
+                // filter: 'brightness(0) invert(1)' // Removed to show original logo colors
               }}
             />
             <Title level={4} style={{ color: 'white', margin: 0, marginRight: '20px', whiteSpace: 'nowrap', fontSize: '1.2rem', fontFamily: 'Anakotmai, sans-serif' }}>
