@@ -81,7 +81,7 @@ const AirDashboard = () => {
         const now = Date.now();
         // 10 minutes cooldown (600,000 ms)
         if (now - lastAlertTime.current > 600000) {
-          if (Notification.permission === 'granted') {
+          if ('Notification' in window && Notification.permission === 'granted') {
             new Notification("แจ้งเตือนคุณภาพอากาศ!", {
               body: `${deviceName} ค่า PM2.5 สูง: ${pm25} µg/m³ กรุณาสวมหน้ากาก!`,
               icon: '/vite.svg'
