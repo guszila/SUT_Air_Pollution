@@ -16,10 +16,11 @@ const HealthAdvisoryCard = ({ pm25 }) => {
     // Helper to determine status color and icon
     const getStatusInfo = (val) => {
         if (val === undefined || val === null) return { color: '#d9d9d9', icon: <MehFilled />, text: 'No Data' };
-        if (val <= 25) return { color: '#52c41a', icon: <SmileFilled />, text: t.adviceExcellent };
-        if (val <= 50) return { color: '#faad14', icon: <MehFilled />, text: t.adviceGood }; // Adjusted thresholds to match previous logic logic
-        if (val <= 100) return { color: '#ff4d4f', icon: <FrownFilled />, text: t.adviceModerate };
-        return { color: '#722ed1', icon: <FrownFilled />, text: t.adviceHazardous };
+        if (val <= 15) return { color: '#00B0F0', icon: <SmileFilled />, text: t.adviceExcellent }; // Blue
+        if (val <= 25) return { color: '#00B050', icon: <SmileFilled />, text: t.adviceGood }; // Green
+        if (val <= 37.5) return { color: '#FFC000', icon: <MehFilled />, text: t.adviceModerate }; // Yellow
+        if (val <= 75) return { color: '#F25F55', icon: <FrownFilled />, text: t.adviceUnhealthy }; // Orange
+        return { color: '#C00000', icon: <FrownFilled />, text: t.adviceHazardous }; // Red
     };
 
     const info = getStatusInfo(pm25);
@@ -43,34 +44,57 @@ const HealthAdvisoryCard = ({ pm25 }) => {
 
 const StatusSection = ({ title, data }) => {
     const { t } = useLanguage();
-    const { pm25, temp, humidity } = data || {};
+    const { pm25, pm25_hourly_avg, temp, humidity, date, time } = data || {};
+
+    const displayPM25 = pm25_hourly_avg !== undefined ? pm25_hourly_avg : pm25;
 
     const getStatus = (val) => {
         if (val === undefined || val === null) return { color: '#d9d9d9', text: 'No Data' };
-        if (val <= 15) return { color: '#52c41a', text: t.excellent };
-        if (val <= 37) return { color: '#faad14', text: t.moderate };
-        if (val <= 75) return { color: '#ff4d4f', text: t.unhealthy };
-        return { color: '#722ed1', text: t.hazardous };
+        if (val <= 15) return { color: '#00B0F0', text: t.excellent };
+        if (val <= 25) return { color: '#00B050', text: t.good };
+        if (val <= 37.5) return { color: '#FFC000', text: t.moderate };
+        if (val <= 75) return { color: '#F25F55', text: t.unhealthy };
+        return { color: '#C00000', text: t.hazardous };
     };
 
-    const currentStatus = getStatus(pm25);
+    const currentStatus = getStatus(displayPM25);
 
     return (
-        <Card title={<Title level={4} style={{ margin: 0, fontFamily: 'Kanit, sans-serif', fontSize: '1.2rem' }}>{title}</Title>} style={{ borderRadius: '15px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '12px' }}>
+        <Card
+            title={
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Title level={4} style={{ margin: 0, fontFamily: 'Kanit, sans-serif', fontSize: '1.2rem' }}>{title}</Title>
+                        {data && (
+                            <Tag color={data.isOffline ? 'red' : 'green'} style={{ marginRight: 0 }}>
+                                {data.isOffline ? t.offline : t.online}
+                            </Tag>
+                        )}
+                    </div>
+                    <Text type="secondary" style={{ fontSize: '12px', fontFamily: 'Kanit, sans-serif' }}>
+                        {data ? `${t.lastUpdateLabel} ${date} ${time}` : ''}
+                    </Text>
+                </div>
+            }
+            style={{ borderRadius: '15px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}
+            bodyStyle={{ padding: '12px' }}
+        >
             <Row gutter={[8, 8]} justify="center">
                 {/* PM2.5 Card */}
                 <Col xs={24} sm={8}>
                     <Card hoverable bordered={false} style={{ textAlign: 'center', background: 'transparent', boxShadow: 'none' }} bodyStyle={{ padding: '0px' }}>
-                        <Title level={5} style={{ fontFamily: 'Kanit, sans-serif', marginBottom: '5px' }}>{t.pm25Value}</Title>
+                        <Title level={5} style={{ fontFamily: 'Kanit, sans-serif', marginBottom: '5px' }}>
+                            {t.pm25Value} <span style={{ fontSize: '10px', color: '#8c8c8c' }}>(เฉลี่ย 24 ชม.)</span>
+                        </Title>
                         <Progress
                             type="dashboard"
-                            percent={pm25 ? Math.min(((pm25) / 100) * 100, 100) : 0}
+                            percent={displayPM25 ? Math.min(((displayPM25) / 100) * 100, 100) : 0}
                             strokeColor={currentStatus.color}
                             width={100}
                             strokeWidth={10}
                             format={() => (
                                 <div style={{ color: currentStatus.color, fontFamily: 'Kanit, sans-serif' }}>
-                                    <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{pm25 !== undefined ? pm25 : '-'}</div>
+                                    <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{displayPM25 !== undefined ? displayPM25 : '-'}</div>
                                     <div style={{ fontSize: '10px' }}>µg/m³</div>
                                 </div>
                             )}
@@ -118,10 +142,11 @@ const HeroGauge = ({ pm25, temp }) => {
 
     const getStatus = (val) => {
         if (val === undefined || val === null) return { color: '#d9d9d9', text: 'No Data' };
-        if (val <= 15) return { color: '#52c41a', text: t.excellent };
-        if (val <= 37) return { color: '#faad14', text: t.moderate };
-        if (val <= 75) return { color: '#ff4d4f', text: t.unhealthy };
-        return { color: '#722ed1', text: t.hazardous };
+        if (val <= 15) return { color: '#00B0F0', text: t.excellent };
+        if (val <= 25) return { color: '#00B050', text: t.good };
+        if (val <= 37.5) return { color: '#FFC000', text: t.moderate };
+        if (val <= 75) return { color: '#F25F55', text: t.unhealthy };
+        return { color: '#C00000', text: t.hazardous };
     };
 
     const status = getStatus(pm25);

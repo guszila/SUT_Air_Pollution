@@ -33,28 +33,30 @@ const AirMap = ({ device1, device2, dailyStats }) => {
             id: 'A_Learning_Building_1',
             name: t.learningBuilding,
             thaiName: t.learningBuilding,
-            position: [14.881556, 102.016861],
-            data: device1
+            position: device2?.lat && device2?.lon ? [device2.lat, device2.lon] : [14.881556, 102.016861],
+            data: device2
         },
         {
             id: 'B_Library_Building',
             name: t.library,
             thaiName: t.library,
-            position: [14.878944, 102.016306],
-            data: device2
+            position: device1?.lat && device1?.lon ? [device1.lat, device1.lon] : [14.878944, 102.016306],
+            data: device1
         }
     ];
 
     const getStatusColor = (pm25) => {
-        if (pm25 <= 15) return '#52c41a'; // Excellent
-        if (pm25 <= 37) return '#faad14'; // Moderate
-        if (pm25 <= 75) return '#ff4d4f'; // Unhealthy
-        return '#722ed1'; // Hazardous
+        if (pm25 <= 15) return '#00B0F0'; // Excellent (Blue)
+        if (pm25 <= 25) return '#00B050'; // Good (Green)
+        if (pm25 <= 37.5) return '#FFC000'; // Moderate (Yellow)
+        if (pm25 <= 75) return '#F25F55'; // Unhealthy (Orange)
+        return '#C00000'; // Hazardous (Red)
     };
 
     const getStatusText = (pm25) => {
         if (pm25 <= 15) return `${t.excellent}`;
-        if (pm25 <= 37) return `${t.moderate}`;
+        if (pm25 <= 25) return `${t.good}`;
+        if (pm25 <= 37.5) return `${t.moderate}`;
         if (pm25 <= 75) return `${t.unhealthy}`;
         return `${t.hazardous}`;
     };
@@ -98,7 +100,7 @@ const AirMap = ({ device1, device2, dailyStats }) => {
                             className: 'custom-marker',
                             html: `
                                 <div style="
-                                    background-color: ${color};
+                                    background-color: ${device.data?.isOffline ? '#8c8c8c' : color};
                                     width: 40px;
                                     height: 40px;
                                     border-radius: 50%;
@@ -111,6 +113,7 @@ const AirMap = ({ device1, device2, dailyStats }) => {
                                     font-size: 14px;
                                     box-shadow: 0 0 10px rgba(0,0,0,0.3);
                                     border: 2px solid white;
+                                    opacity: ${device.data?.isOffline ? 0.7 : 1};
                                 ">
                                     ${pm25}
                                 </div>
@@ -135,6 +138,7 @@ const AirMap = ({ device1, device2, dailyStats }) => {
                                 >
                                     <span style={{ fontFamily: 'Kanit, sans-serif', fontSize: '14px' }}>
                                         {device.thaiName}
+                                        {device.data?.isOffline && <span style={{ color: 'red', marginLeft: '5px' }}>({t.offline})</span>}
                                     </span>
                                 </Tooltip>
                             </Marker>
@@ -150,7 +154,9 @@ const AirMap = ({ device1, device2, dailyStats }) => {
                         <EnvironmentOutlined style={{ marginRight: 8, color: '#1890ff' }} />
                         <span style={{ fontSize: '18px' }}>{activeDevice?.thaiName}</span>
                         {activeDevice && (
-                            <Tag color="success" style={{ marginLeft: '10px' }}>{t.deviceStatus}: {t.online}</Tag>
+                            <Tag color={activeDevice.data?.isOffline ? "red" : "success"} style={{ marginLeft: '10px' }}>
+                                {t.deviceStatus}: {activeDevice.data?.isOffline ? t.offline : t.online}
+                            </Tag>
                         )}
                     </div>
                 }

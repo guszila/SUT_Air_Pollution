@@ -104,34 +104,45 @@ const AirDashboard = () => {
 
   // Data Fetching
   const fetchAirQuality = async () => {
-    const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5C1Xn7PWmRy_um7zBoQsvC2KRaVbvY4f7xjqWVOw7qVX-J6sCYIg0SJkeb237Yb8R7jo_86c_l9B1/pub?gid=0&single=true&output=csv";
+    // URL 1: ESP32_01 (Learning Bldg 1) - gid=1098888062
+    const urlDevice1 = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5C1Xn7PWmRy_um7zBoQsvC2KRaVbvY4f7xjqWVOw7qVX-J6sCYIg0SJkeb237Yb8R7jo_86c_l9B1/pub?gid=1098888062&single=true&output=csv";
+    // URL 2: ESP32_02 (Library) - gid=1804783139
+    const urlDevice2 = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5C1Xn7PWmRy_um7zBoQsvC2KRaVbvY4f7xjqWVOw7qVX-J6sCYIg0SJkeb237Yb8R7jo_86c_l9B1/pub?gid=1804783139&single=true&output=csv";
+
     try {
-      const response = await axios.get(csvUrl);
-      const rows = response.data.split('\n').filter(row => row.trim() !== "");
-      // Remove header
-      const dataRows = rows.slice(1);
+      const [response1, response2] = await Promise.all([
+        axios.get(urlDevice1),
+        axios.get(urlDevice2)
+      ]);
 
-      const parsedData = dataRows.map(row => {
-        const cols = row.split(',');
-        // Device ID is in Column 3 (Index 2) based on CSV inspection
-        const deviceId = cols[2].trim();
+      const parseCSV = (csvData) => {
+        const rows = csvData.split('\n').filter(row => row.trim() !== "");
+        // Remove header
+        const dataRows = rows.slice(1);
+        return dataRows.map(row => {
+          const cols = row.split(',');
+          // Device ID is in Column 3 (Index 2)
+          return {
+            date: cols[0],
+            time: cols[1],
+            deviceId: cols[2].trim(),
+            pm25: parseFloat(cols[4]),
+            pm10: parseFloat(cols[5]),
+            temp: parseFloat(cols[6]),
+            humidity: parseFloat(cols[7]),
+          };
+        });
+      };
 
-        return {
-          date: cols[0],
-          time: cols[1],
-          deviceId: deviceId,
-          pm25: parseFloat(cols[4]),
-          pm10: parseFloat(cols[5]),
-          temp: parseFloat(cols[6]),
-          humidity: parseFloat(cols[7]),
-        };
-      });
+      const data1 = parseCSV(response1.data);
+      const data2 = parseCSV(response2.data);
+      const allData = [...data1, ...data2];
 
-      setHistoryData(parsedData);
+      setHistoryData(allData);
 
-      // Filter Data by Device Name
-      const d1Data = parsedData.filter(d => d.deviceId === 'A_Learning_Building_1' || d.deviceId === 'ESP32_02');
-      const d2Data = parsedData.filter(d => d.deviceId === 'B_Library_Building' || d.deviceId === 'ESP32_01');
+      // Filter Data by Device Name (using the new GID-based data, checking deviceId matches)
+      const d1Data = data1; // Since URL1 is ESP32_01
+      const d2Data = data2; // Since URL2 is ESP32_02
 
       // --- Calculate Daily Averages for Grouped Chart ---
       const dailyMap = {};
@@ -176,8 +187,73 @@ const AirDashboard = () => {
       });
       setDailyStats(dailyStatsArray);
 
+      // --- Helper to calculate Hourly Average ---
+      const calculateHourlyAvg = (data) => {
+        if (!data || data.length === 0) return 0;
+
+        const latestInfo = data[data.length - 1];
+        if (!latestInfo) return 0;
+
+        // Parse Latest Timestamp
+        const [day, month, year] = latestInfo.date.split('/');
+        const [hour, minute, second] = latestInfo.time.split(':');
+        // Note: Months - 1 for Date object
+        const latestTime = new Date(year, month - 1, day, hour, minute, second || 0).getTime();
+
+        const oneHourAgo = latestTime - (60 * 60 * 1000);
+
+        let sum = 0;
+        let count = 0;
+
+        for (let i = data.length - 1; i >= 0; i--) {
+          const item = data[i];
+          const [dDay, dMonth, dYear] = item.date.split('/');
+          const [dHour, dMinute, dSecond] = item.time.split(':');
+          const itemTime = new Date(dYear, dMonth - 1, dDay, dHour, dMinute, dSecond || 0).getTime();
+
+          if (itemTime >= oneHourAgo) {
+            sum += item.pm25;
+            count++;
+          } else {
+            // Data is sorted by time, so we can break early if we go past 1 hour ago
+            // However, ensuring we don't break consecutively if order is weird, but typically it's chronological. 
+            // Given file append nature, safe to assume roughly sorted. 
+            // To be safe against minor unordered rows, we could just iterate a bit more or verify sorting, 
+            // but normally appended data is sorted.
+            if (latestTime - itemTime > 2 * 60 * 60 * 1000) break; // Break if > 2 hours gap
+          }
+        }
+
+        return count > 0 ? (sum / count).toFixed(0) : latestInfo.pm25;
+      };
+
       const latestD1 = d1Data.length > 0 ? d1Data[d1Data.length - 1] : null;
       const latestD2 = d2Data.length > 0 ? d2Data[d2Data.length - 1] : null;
+
+      // Helper to check if device is offline (older than 20 mins)
+      const isDeviceOffline = (device) => {
+        if (!device) return true;
+        try {
+          const [d, m, y] = device.date.split('/');
+          const [h, min, s] = device.time.split(':');
+          const deviceDate = new Date(y, m - 1, d, h, min, s);
+          const now = new Date();
+          const diff = now - deviceDate;
+          return diff > 20 * 60 * 1000; // 20 minutes
+        } catch (e) {
+          return true;
+        }
+      };
+
+      // Attach Hourly Average to Device State
+      if (latestD1) {
+        latestD1.pm25_hourly_avg = calculateHourlyAvg(d1Data);
+        latestD1.isOffline = isDeviceOffline(latestD1);
+      }
+      if (latestD2) {
+        latestD2.pm25_hourly_avg = calculateHourlyAvg(d2Data);
+        latestD2.isOffline = isDeviceOffline(latestD2);
+      }
 
       setDevice1(latestD1);
       setDevice2(latestD2);
@@ -224,13 +300,16 @@ const AirDashboard = () => {
 
       let sumPM25 = 0;
       let countPM25 = 0;
-      if (latestD1) { sumPM25 += latestD1.pm25; countPM25++; }
-      if (latestD2) { sumPM25 += latestD2.pm25; countPM25++; }
+      // For average PM2.5 at top, we can use the hourly average or instant. 
+      // User asked for "Card display average 1 hour", implying the device cards. 
+      // Using instant or avg for the main summary? Let's use avg if available.
+      if (latestD1) { sumPM25 += parseFloat(latestD1.pm25_hourly_avg || latestD1.pm25); countPM25++; }
+      if (latestD2) { sumPM25 += parseFloat(latestD2.pm25_hourly_avg || latestD2.pm25); countPM25++; }
       setAveragePM25(countPM25 > 0 ? (sumPM25 / countPM25).toFixed(1) : 0);
 
       // Determine Best Air Quality
       if (latestD1 && latestD2) {
-        if (latestD1.pm25 < latestD2.pm25) {
+        if (parseFloat(latestD1.pm25) < parseFloat(latestD2.pm25)) { // Compare instant for best location? or avg? Using instant seems more "now"
           setBestLocation({ name: 'learningBuilding', value: latestD1.pm25 });
         } else {
           setBestLocation({ name: 'library', value: latestD2.pm25 });

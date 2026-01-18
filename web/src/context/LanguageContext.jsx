@@ -52,12 +52,14 @@ export const translations = {
         // Map
         deviceStatus: "สถานะอุปกรณ์",
         online: "ออนไลน์",
+        offline: "ออฟไลน์",
         close: "ปิด (Close)",
         loading: "กำลังโหลดข้อมูล...",
         recommendation: "ข้อแนะนำ",
         learningBuilding: "อาคารเรียนรวม 1",
         library: "อาคารบรรณสาร",
         updateTime: "เวลาอัปเดต",
+        lastUpdateLabel: "อัพเดทล่าสุด:",
 
         // Settings
         notification: "การแจ้งเตือน (Notifications)",
@@ -116,12 +118,14 @@ export const translations = {
         // Map
         deviceStatus: "Device Status",
         online: "Online",
+        offline: "Offline",
         close: "Close",
         loading: "Loading data...",
         recommendation: "Recommendation",
         learningBuilding: "Learning Building 1",
         library: "Library",
         updateTime: "Update Time",
+        lastUpdateLabel: "Last Updated:",
 
         // Settings
         notification: "Notifications",
