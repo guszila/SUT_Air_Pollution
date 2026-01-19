@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Card, Row, Col, Typography, Progress, Divider, Table, Tag } from 'antd';
+import { Card, Row, Col, Typography, Progress, Divider, Table, Tag, Radio } from 'antd';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, LabelList, ComposedChart, Area } from 'recharts';
 
 import { EnvironmentOutlined } from '@ant-design/icons';
@@ -191,21 +191,51 @@ const HeroGauge = ({ pm25, temp }) => {
 
 const RankingTable = ({ device1, device2 }) => {
     const { t } = useLanguage();
+
+    const getPM25Val = (device) => device?.pm25_hourly_avg !== undefined ? parseFloat(device.pm25_hourly_avg) : (device?.pm25 || 0);
+
     const data = [
-        { key: '1', name: t.learningBuilding, pm25: device1?.pm25 || 0, status: device1?.pm25 <= 25 ? 'success' : (device1?.pm25 <= 37.5 ? 'warning' : 'error') },
-        { key: '2', name: t.library, pm25: device2?.pm25 || 0, status: device2?.pm25 <= 25 ? 'success' : (device2?.pm25 <= 37.5 ? 'warning' : 'error') },
+        {
+            key: '1',
+            name: t.learningBuilding,
+            pm25: getPM25Val(device1),
+            pm10: device1?.pm10 || '-',
+            temp: device1?.temp || '-',
+            humidity: device1?.humidity || '-',
+            lastUpdate: device1 ? `${device1.date} ${device1.time}` : '-',
+            status: getPM25Val(device1) <= 25 ? 'success' : (getPM25Val(device1) <= 37.5 ? 'warning' : 'error')
+        },
+        {
+            key: '2',
+            name: t.library,
+            pm25: getPM25Val(device2),
+            pm10: device2?.pm10 || '-',
+            temp: device2?.temp || '-',
+            humidity: device2?.humidity || '-',
+            lastUpdate: device2 ? `${device2.date} ${device2.time}` : '-',
+            status: getPM25Val(device2) <= 25 ? 'success' : (getPM25Val(device2) <= 37.5 ? 'warning' : 'error')
+        },
     ].sort((a, b) => a.pm25 - b.pm25);
 
     const columns = [
-        { title: t.rank, dataIndex: 'key', render: (t, r, i) => i + 1, width: 80 },
+        { title: t.rank, dataIndex: 'key', render: (t, r, i) => i + 1, width: 60, align: 'center' },
         { title: t.location, dataIndex: 'name' },
-        { title: 'PM2.5', dataIndex: 'pm25', render: (val) => `${val} µg/m³` },
-        { title: t.status, dataIndex: 'status', render: (tag) => <Tag color={tag}>{tag === 'success' ? t.good : (tag === 'warning' ? t.moderate : t.unhealthy)}</Tag> }
+        {
+            title: <span>PM2.5 <br /><small>(avg 1h)</small></span>,
+            dataIndex: 'pm25',
+            align: 'center',
+            render: (val) => <span style={{ fontWeight: 'bold' }}>{val}</span>
+        },
+        { title: 'PM10', dataIndex: 'pm10', align: 'center', render: (val) => val !== '-' ? val : '-' },
+        { title: 'Temp (°C)', dataIndex: 'temp', align: 'center', render: (val) => val !== '-' ? val : '-' },
+        { title: 'Humid (%)', dataIndex: 'humidity', align: 'center', render: (val) => val !== '-' ? val : '-' },
+        { title: t.lastUpdateLabel || 'Last Update', dataIndex: 'lastUpdate', align: 'center', width: 140 },
+        { title: t.status, dataIndex: 'status', align: 'center', render: (tag) => <Tag color={tag}>{tag === 'success' ? t.good : (tag === 'warning' ? t.moderate : t.unhealthy)}</Tag> }
     ];
 
     return (
         <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.ranking}</span>} style={{ borderRadius: '15px', marginBottom: '20px' }}>
-            <Table dataSource={data} columns={columns} pagination={false} size="small" />
+            <Table dataSource={data} columns={columns} pagination={false} size="small" scroll={{ x: true }} />
         </Card>
     );
 };
@@ -245,7 +275,7 @@ const AirQualityReferenceTable = () => {
     );
 };
 
-const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesData, averagePM25, mode = 'home' }) => {
+const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesData, averagePM25, mode = 'home', currentTime, bestLocation }) => {
     const { t } = useLanguage();
 
     // Prepare data for the single-stream chart (Last 20 readings)
@@ -256,6 +286,11 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
     const temp2 = parseFloat(device2?.temp) || 0;
     const validTemps = [device1?.temp, device2?.temp].filter(t => t !== undefined && t !== null).length;
     const averageTemp = validTemps > 0 ? ((temp1 + temp2) / validTemps).toFixed(1) : '-';
+
+    const [daysRange, setDaysRange] = useState('7');
+
+    // Filter daily stats based on selection
+    const filteredDailyStats = dailyStats ? dailyStats.slice(daysRange === '7' ? -7 : -30) : [];
 
     return (
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
@@ -302,22 +337,33 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                             </Card>
                         </Col>
 
-                        <Col xs={24} lg={8}>
-                            <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.healthAdvice}</span>} style={{ borderRadius: '15px', height: '100%' }}>
-                                <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                                    {averagePM25 <= 25 && <SmileFilled style={{ fontSize: '64px', color: '#52c41a' }} />}
-                                    {averagePM25 > 25 && averagePM25 <= 50 && <MehFilled style={{ fontSize: '64px', color: '#faad14' }} />}
-                                    {averagePM25 > 50 && <FrownFilled style={{ fontSize: '64px', color: '#ff4d4f' }} />}
-
-                                    <div style={{ marginTop: '20px', fontFamily: 'Kanit, sans-serif' }}>
-                                        <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px' }}>
-                                            PM2.5 เฉลี่ย: {averagePM25} µg/m³
+                        <Col xs={24} lg={12}>
+                            <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.summary || "System Summary"}</span>} style={{ borderRadius: '15px', height: '100%' }}>
+                                <div style={{ textAlign: 'center', padding: '20px 0', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
+                                    <div style={{ fontFamily: 'Kanit, sans-serif' }}>
+                                        <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#1890ff', lineHeight: 1 }}>
+                                            {currentTime ? currentTime.toLocaleTimeString('th-TH', { hour12: false }) : '--:--:--'}
                                         </div>
-                                        <div style={{ fontSize: '16px' }}>
-                                            {averagePM25 <= 25 && t.adviceExcellent}
-                                            {averagePM25 > 25 && averagePM25 <= 37 && t.adviceGood}
-                                            {averagePM25 > 37 && averagePM25 <= 50 && t.adviceModerate}
-                                            {averagePM25 > 50 && t.adviceHazardous}
+                                        <div style={{ fontSize: '18px', color: '#8c8c8c', marginBottom: '20px' }}>
+                                            {currentTime ? currentTime.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '-'}
+                                        </div>
+
+                                        <Divider />
+
+                                        <div style={{ marginTop: '10px' }}>
+                                            <div style={{ fontSize: '16px', marginBottom: '5px' }}>{t.bestAir}</div>
+                                            {bestLocation ? (
+                                                <>
+                                                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#52c41a' }}>
+                                                        {t[bestLocation.name]}
+                                                    </div>
+                                                    <Tag color="success" style={{ marginTop: '5px' }}>
+                                                        PM2.5: {bestLocation.value} µg/m³
+                                                    </Tag>
+                                                </>
+                                            ) : (
+                                                <div style={{ color: '#8c8c8c' }}>-</div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -329,6 +375,8 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
 
 
                     <Row gutter={[16, 16]}>
+
+
                         <Col xs={24} lg={12}>
                             <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>Temperature & Humidity Trends</span>} style={{ borderRadius: '15px' }}>
                                 <div style={{ width: '100%', height: 300 }}>
@@ -342,6 +390,8 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                                             <Legend wrapperStyle={{ fontFamily: 'Kanit, sans-serif' }} />
                                             <Line yAxisId="left" type="monotone" dataKey="temp_A" name={`Temp (${t.learningBuilding})`} stroke="#ff7a45" dot={false} strokeWidth={2} />
                                             <Line yAxisId="right" type="monotone" dataKey="humid_A" name={`Humid (${t.learningBuilding})`} stroke="#36cfc9" dot={false} strokeWidth={2} />
+                                            <Line yAxisId="left" type="monotone" dataKey="temp_B" name={`Temp (${t.library})`} stroke="#ff9c6e" dot={false} strokeWidth={2} strokeDasharray="5 5" />
+                                            <Line yAxisId="right" type="monotone" dataKey="humid_B" name={`Humid (${t.library})`} stroke="#5cdbd3" dot={false} strokeWidth={2} strokeDasharray="5 5" />
                                         </ComposedChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -369,13 +419,21 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
 
                     {/* Daily Statistics Bar Chart */}
                     <Card
-                        title={<span style={{ fontFamily: 'Kanit, sans-serif', fontSize: '18px' }}>{t.dailyStats}</span>}
+                        title={
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: 'Kanit, sans-serif' }}>
+                                <span style={{ fontSize: '18px' }}>{t.dailyStats}</span>
+                                <Radio.Group value={daysRange} onChange={(e) => setDaysRange(e.target.value)} size="small" buttonStyle="solid">
+                                    <Radio.Button value="7">7 {t.days || "Days"}</Radio.Button>
+                                    <Radio.Button value="30">30 {t.days || "Days"}</Radio.Button>
+                                </Radio.Group>
+                            </div>
+                        }
                         style={{ marginTop: '20px', borderRadius: '15px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                     >
                         <div style={{ width: '100%', height: 300 }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart
-                                    data={dailyStats}
+                                    data={filteredDailyStats}
                                     margin={{
                                         top: 20,
                                         right: 30,

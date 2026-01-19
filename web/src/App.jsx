@@ -104,10 +104,10 @@ const AirDashboard = () => {
 
   // Data Fetching
   const fetchAirQuality = async () => {
-    // URL 1: ESP32_01 (Learning Bldg 1) - gid=1098888062
-    const urlDevice1 = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5C1Xn7PWmRy_um7zBoQsvC2KRaVbvY4f7xjqWVOw7qVX-J6sCYIg0SJkeb237Yb8R7jo_86c_l9B1/pub?gid=1098888062&single=true&output=csv";
-    // URL 2: ESP32_02 (Library) - gid=1804783139
-    const urlDevice2 = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5C1Xn7PWmRy_um7zBoQsvC2KRaVbvY4f7xjqWVOw7qVX-J6sCYIg0SJkeb237Yb8R7jo_86c_l9B1/pub?gid=1804783139&single=true&output=csv";
+    // URL 1: ESP32_02 (Learning Bldg 1) - gid=1804783139
+    const urlDevice1 = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5C1Xn7PWmRy_um7zBoQsvC2KRaVbvY4f7xjqWVOw7qVX-J6sCYIg0SJkeb237Yb8R7jo_86c_l9B1/pub?gid=1804783139&single=true&output=csv";
+    // URL 2: ESP32_01 (Library) - gid=1098888062
+    const urlDevice2 = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5C1Xn7PWmRy_um7zBoQsvC2KRaVbvY4f7xjqWVOw7qVX-J6sCYIg0SJkeb237Yb8R7jo_86c_l9B1/pub?gid=1098888062&single=true&output=csv";
 
     try {
       const [response1, response2] = await Promise.all([
@@ -141,8 +141,8 @@ const AirDashboard = () => {
       setHistoryData(allData);
 
       // Filter Data by Device Name (using the new GID-based data, checking deviceId matches)
-      const d1Data = data1; // Since URL1 is ESP32_01
-      const d2Data = data2; // Since URL2 is ESP32_02
+      const d1Data = data1; // Since URL1 is ESP32_02 (Learning)
+      const d2Data = data2; // Since URL2 is ESP32_01 (Library)
 
       // --- Calculate Daily Averages for Grouped Chart ---
       const dailyMap = {};
@@ -170,7 +170,7 @@ const AirDashboard = () => {
       processForDaily(d1Data, 'A');
       processForDaily(d2Data, 'B');
 
-      const dailyStatsArray = Object.keys(dailyMap).sort().slice(-7).map(key => {
+      const dailyStatsArray = Object.keys(dailyMap).sort().slice(-30).map(key => {
         const entry = dailyMap[key];
         const avgA = entry.countA ? (entry.sumA / entry.countA).toFixed(0) : 0;
         const avgB = entry.countB ? (entry.sumB / entry.countB).toFixed(0) : 0;
@@ -464,7 +464,7 @@ const AirDashboard = () => {
           />
         );
       case 'dashboard':
-        return <DashboardView mode="dashboard" device1={device1} device2={device2} timeSeriesData={timeSeriesData} averagePM25={averagePM25} dailyStats={dailyStats} />;
+        return <DashboardView mode="dashboard" device1={device1} device2={device2} timeSeriesData={timeSeriesData} averagePM25={averagePM25} dailyStats={dailyStats} currentTime={currentTime} bestLocation={bestLocation} />;
       case 'table':
         return <TableView data={historyData} onSettingsClick={() => setCurrentView('settings')} />;
       case 'settings':

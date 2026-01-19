@@ -33,15 +33,15 @@ const AirMap = ({ device1, device2, dailyStats }) => {
             id: 'A_Learning_Building_1',
             name: t.learningBuilding,
             thaiName: t.learningBuilding,
-            position: device2?.lat && device2?.lon ? [device2.lat, device2.lon] : [14.881556, 102.016861],
-            data: device2
+            position: device1?.lat && device1?.lon ? [device1.lat, device1.lon] : [14.881556, 102.016861],
+            data: device1
         },
         {
             id: 'B_Library_Building',
             name: t.library,
             thaiName: t.library,
-            position: device1?.lat && device1?.lon ? [device1.lat, device1.lon] : [14.878944, 102.016306],
-            data: device1
+            position: device2?.lat && device2?.lon ? [device2.lat, device2.lon] : [14.878944, 102.016306],
+            data: device2
         }
     ];
 
