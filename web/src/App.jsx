@@ -519,7 +519,7 @@ const AirDashboard = () => {
               }}
             />
             <Title level={4} style={{ color: 'white', margin: 0, marginRight: '20px', whiteSpace: 'nowrap', fontSize: '1.2rem', fontFamily: 'Anakotmai, sans-serif' }}>
-              SUT Air Pollution
+              SUT Air Dashboard
             </Title>
           </div>
 
@@ -679,7 +679,7 @@ const AirDashboard = () => {
         </div>
 
         <Footer style={{ textAlign: 'center', padding: '20px 10px', fontFamily: 'Kanit, sans-serif', paddingBottom: '80px' }}>
-          © 2025 SUT Air Pollution
+          © 2025 SUT Air Dashboard
         </Footer>
       </Layout>
     </ConfigProvider>

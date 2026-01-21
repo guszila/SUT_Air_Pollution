@@ -316,7 +316,7 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
             {mode === 'dashboard' && (
                 <>
                     <Row gutter={[16, 16]}>
-                        <Col xs={24} lg={12}>
+                        <Col xs={{ span: 24, order: 2 }} lg={{ span: 12, order: 1 }}>
                             <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.trend}</span>} style={{ borderRadius: '15px' }}>
                                 <div style={{ width: '100%', height: 300 }}>
                                     <ResponsiveContainer>
@@ -337,7 +337,7 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                             </Card>
                         </Col>
 
-                        <Col xs={24} lg={12}>
+                        <Col xs={{ span: 24, order: 1 }} lg={{ span: 12, order: 2 }}>
                             <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.summary || "System Summary"}</span>} style={{ borderRadius: '15px', height: '100%' }}>
                                 <div style={{ textAlign: 'center', padding: '20px 0', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
                                     <div style={{ fontFamily: 'Kanit, sans-serif' }}>
@@ -420,7 +420,7 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                     {/* Daily Statistics Bar Chart */}
                     <Card
                         title={
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: 'Kanit, sans-serif' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: 'Kanit, sans-serif', flexWrap: 'wrap', gap: '10px' }}>
                                 <span style={{ fontSize: '18px' }}>{t.dailyStats}</span>
                                 <Radio.Group value={daysRange} onChange={(e) => setDaysRange(e.target.value)} size="small" buttonStyle="solid">
                                     <Radio.Button value="7">7 {t.days || "Days"}</Radio.Button>
