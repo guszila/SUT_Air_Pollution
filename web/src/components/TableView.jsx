@@ -1,11 +1,13 @@
-import React from 'react';
-import { Table, Card } from 'antd';
+import React, { useState, useMemo } from 'react';
+import { Table, Card, Input, Button } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 
 const TableView = ({ data }) => {
     const { t } = useLanguage();
     const { isDarkMode } = useTheme();
+    const [searchText, setSearchText] = useState('');
 
     // Identify latest data for each device to highlight
     const latestTimestamps = {};
@@ -98,11 +100,77 @@ const TableView = ({ data }) => {
         },
     ];
 
+    const filteredData = useMemo(() => {
+        if (!data) return [];
+        if (!searchText) return data;
+
+        const lowerSearchText = searchText.toLowerCase();
+        return data.filter(item => {
+            const deviceName = item.deviceId === 'ESP32_01' ? `ESP32_01 (${t.library})` :
+                item.deviceId === 'ESP32_02' ? `ESP32_02 (${t.learningBuilding})` :
+                    item.deviceId;
+            return deviceName?.toLowerCase().includes(lowerSearchText);
+        });
+    }, [data, searchText, t]);
+
+    const downloadCSV = () => {
+        if (!filteredData || filteredData.length === 0) return;
+
+        // Header mapping
+        const headers = [t.date || "Date", t.time || "Time", t.device || "Device", "PM2.5 (µg/m³)", "PM10 (µg/m³)", `${t.temperature || "Temperature"} (°C)`, `${t.humidity || "Humidity"} (%)`];
+
+        const csvRows = filteredData.map(row => {
+            const deviceName = row.deviceId === 'ESP32_01' ? `ESP32_01 (${t.library || 'Library'})` :
+                row.deviceId === 'ESP32_02' ? `ESP32_02 (${t.learningBuilding || 'Learning Bldg'})` :
+                    row.deviceId;
+            return [
+                row.date,
+                row.time,
+                deviceName,
+                row.pm25,
+                row.pm10 || 0,
+                row.temp,
+                row.humidity
+            ].join(',');
+        });
+
+        // Add BOM for Excel UTF-8 support
+        const csvContent = "\uFEFF" + [headers.join(','), ...csvRows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `air_quality_data_${new Date().getTime()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <Card
             title={
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
                     <span>{t.table}</span>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <Button
+                            type="primary"
+                            icon={<DownloadOutlined />}
+                            onClick={downloadCSV}
+                            style={{
+                                backgroundColor: isDarkMode ? '#177ddc' : '#f97316',
+                                fontFamily: 'Kanit, sans-serif'
+                            }}
+                        >
+                            {t.language === 'en' ? "Download CSV" : "ดาวน์โหลดข้อมูล (CSV)"}
+                        </Button>
+                        <Input.Search
+                            placeholder={t.language === 'en' ? "Search device name..." : "ค้นหาชื่ออุปกรณ์..."}
+                            allowClear
+                            onChange={(e) => setSearchText(e.target.value)}
+                            onSearch={(value) => setSearchText(value)}
+                            style={{ width: 250 }}
+                        />
+                    </div>
                 </div>
             }
             style={{ borderRadius: '15px', marginTop: '10px' }}
@@ -117,7 +185,7 @@ const TableView = ({ data }) => {
                 }
             `}</style>
             <Table
-                dataSource={data}
+                dataSource={filteredData}
                 columns={columns}
                 rowKey={(record, index) => index}
                 pagination={{ pageSize: 10 }}

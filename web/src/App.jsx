@@ -10,7 +10,6 @@ import Settings from './components/Settings';
 import { useLanguage } from './context/LanguageContext';
 import { useTheme } from './context/ThemeContext';
 import { useSettings } from './context/SettingsContext';
-import ProfileView from './components/ProfileView';
 
 const { Header, Content, Footer } = Layout;
 const { Title, Text } = Typography;
@@ -35,8 +34,6 @@ const AirDashboard = () => {
   const [timeSeriesData, setTimeSeriesData] = useState([]);
   const [averagePM25, setAveragePM25] = useState(0);
   const [bestLocation, setBestLocation] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Alert Cooldown Ref
   const lastAlertTime = useRef(0);
@@ -46,31 +43,6 @@ const AirDashboard = () => {
     if ('Notification' in window) {
       Notification.requestPermission();
     }
-  }, []);
-
-  // Initialize LIFF
-  useEffect(() => {
-    const initLiff = async () => {
-      try {
-        if (window.liff) {
-          await window.liff.init({ liffId: "2008874361-7p7NpOmA" });
-
-          // Auto Login if in LINE Client
-          if (window.liff.isInClient() && !window.liff.isLoggedIn()) {
-            window.liff.login();
-            return; // Stop execution to wait for login redirect
-          }
-
-          if (window.liff.isLoggedIn()) {
-            const profile = await window.liff.getProfile();
-            setUserProfile(profile);
-          }
-        }
-      } catch (error) {
-        console.error("LIFF Initialization failed:", error);
-      }
-    };
-    initLiff();
   }, []);
 
   // Check for Alerts
@@ -363,75 +335,6 @@ const AirDashboard = () => {
     };
   }, [lastScrollY]);
 
-  const handleLogin = () => {
-    if (window.liff) {
-      window.liff.login();
-    }
-  };
-
-  const handleLogout = () => {
-    if (window.liff && window.liff.isLoggedIn()) {
-      window.liff.logout();
-      window.location.reload();
-    }
-  };
-
-  const handleUpdateProfile = (newProfile) => {
-    setUserProfile(newProfile);
-    // In a real app, you would also probably save this to a database here
-  };
-
-  const profileMenuItems = userProfile ? [
-    {
-      key: 'user-header',
-      label: (
-        <div style={{ padding: '4px' }}>
-          <Text strong>{userProfile?.displayName || "User"}</Text>
-        </div>
-      ),
-      disabled: true,
-      style: { cursor: 'default', color: isDarkMode ? 'white' : 'black' }
-    },
-    {
-      type: 'divider',
-    },
-    {
-      key: 'view-profile',
-      icon: <UserOutlined />,
-      label: 'View Profile',
-      onClick: () => setIsProfileModalOpen(true),
-    },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: t.settings || 'Settings',
-      onClick: () => setCurrentView('settings'),
-    },
-    {
-      key: 'logout',
-      icon: <LogoutOutlined />,
-      label: 'Logout',
-      onClick: handleLogout,
-      danger: true,
-    },
-  ] : [
-    {
-      key: 'login-trigger',
-      label: (
-        <div onClick={(e) => { e.preventDefault(); handleLogin(); }}>
-          Log in with LINE
-        </div>
-      ),
-      icon: <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE" style={{ width: '20px', height: '20px' }} />,
-    },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: t.settings || 'Settings',
-      onClick: () => setCurrentView('settings'),
-    }
-  ];
-
   const renderContent = () => {
     if (loading) return <Spin size="large" style={{ display: 'block', margin: '100px auto' }} />;
 
@@ -451,17 +354,6 @@ const AirDashboard = () => {
               <TableView data={historyData} />
             </div>
           </div>
-        );
-      case 'profile':
-        return (
-          <ProfileView
-            userProfile={userProfile}
-            onLogout={handleLogout}
-            onSettingsClick={() => setCurrentView('settings')}
-            onTableClick={() => setCurrentView('table')}
-            onUpdateProfile={handleUpdateProfile}
-            onLogin={handleLogin}
-          />
         );
       case 'dashboard':
         return <DashboardView mode="dashboard" device1={device1} device2={device2} timeSeriesData={timeSeriesData} averagePM25={averagePM25} dailyStats={dailyStats} currentTime={currentTime} bestLocation={bestLocation} />;
@@ -513,9 +405,9 @@ const AirDashboard = () => {
               alt="SUT Air Pollution Logo"
               style={{
                 height: '50px',
+                width: 'auto',
                 marginRight: '12px',
                 objectFit: 'contain',
-                // filter: 'brightness(0) invert(1)' // Removed to show original logo colors
               }}
             />
             <Title level={4} style={{ color: 'white', margin: 0, marginRight: '20px', whiteSpace: 'nowrap', fontSize: '1.2rem', fontFamily: 'Anakotmai, sans-serif' }}>
@@ -541,40 +433,10 @@ const AirDashboard = () => {
 
           {/* Time Removed as requested */}
 
-          <Dropdown menu={{ items: profileMenuItems }} placement="bottomRight" arrow trigger={['click']}>
-            <div style={{ marginLeft: '16px', display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-              {userProfile ? (
-                <>
-                  <Avatar src={userProfile.pictureUrl} icon={<UserOutlined />} size="large" style={{ border: '2px solid rgba(255,255,255,0.8)' }} />
-                  <Text className="desktop-visible" style={{ color: 'white', marginLeft: '8px', fontFamily: 'Kanit, sans-serif' }}>
-                    {userProfile.displayName}
-                  </Text>
-                </>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <Avatar icon={<UserOutlined />} size="large" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
-                  <Text className="mobile-only" style={{ color: 'white', marginLeft: '6px', fontSize: '12px', fontFamily: 'Kanit, sans-serif' }}>เข้าสู่ระบบ</Text>
-                </div>
-              )}
-            </div>
-          </Dropdown>
+          <div style={{ marginLeft: '16px', display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <Button type="text" icon={<SettingOutlined style={{ fontSize: '20px', color: 'white' }} />} onClick={() => setCurrentView('settings')} />
+          </div>
 
-          <Modal
-            open={isProfileModalOpen}
-            onCancel={() => setIsProfileModalOpen(false)}
-            footer={null}
-            centered
-            bodyStyle={{ textAlign: 'center', padding: '40px 20px' }}
-          >
-            {userProfile && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Avatar src={userProfile.pictureUrl} size={100} icon={<UserOutlined />} style={{ marginBottom: '16px', border: '4px solid #f0f0f0' }} />
-                <Title level={3} style={{ margin: 0 }}>{userProfile.displayName}</Title>
-                <Text type="secondary">LINE User</Text>
-                <Text type="secondary" style={{ marginTop: '8px', fontSize: '12px' }}>ID: {userProfile.userId}</Text>
-              </div>
-            )}
-          </Modal>
         </Header>
 
         {/* Mobile Drawer Navigation */}
@@ -672,9 +534,9 @@ const AirDashboard = () => {
             <span style={{ fontSize: '10px', marginTop: '2px', fontFamily: 'Kanit' }}>{t.map || 'Map'}</span>
           </div>
 
-          <div onClick={() => setCurrentView('profile')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', height: '100%', justifyContent: 'center' }} className={currentView === 'profile' ? 'nav-item-active' : 'nav-item'}>
-            <UserOutlined style={{ fontSize: '24px' }} />
-            <span style={{ fontSize: '10px', marginTop: '2px', fontFamily: 'Kanit' }}>{t.profile || 'Profile'}</span>
+          <div onClick={() => setCurrentView('settings')} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', height: '100%', justifyContent: 'center' }} className={currentView === 'settings' ? 'nav-item-active' : 'nav-item'}>
+            <SettingOutlined style={{ fontSize: '24px' }} />
+            <span style={{ fontSize: '10px', marginTop: '2px', fontFamily: 'Kanit' }}>{t.settings || 'Settings'}</span>
           </div>
         </div>
 

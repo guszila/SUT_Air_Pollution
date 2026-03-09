@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { Card, Row, Col, Typography, Progress, Divider, Table, Tag, Radio } from 'antd';
+import { Card, Row, Col, Typography, Progress, Divider, Table, Tag, Radio, Checkbox, Space } from 'antd';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, LabelList, ComposedChart, Area } from 'recharts';
 
 import { EnvironmentOutlined } from '@ant-design/icons';
@@ -289,6 +289,9 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
 
     const [daysRange, setDaysRange] = useState('7');
 
+    const [showDevice1, setShowDevice1] = useState(true);
+    const [showDevice2, setShowDevice2] = useState(true);
+
     // Filter daily stats based on selection
     const filteredDailyStats = dailyStats ? dailyStats.slice(daysRange === '7' ? -7 : -30) : [];
 
@@ -315,22 +318,35 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
 
             {mode === 'dashboard' && (
                 <>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+                        <Card size="small" style={{ borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                            <Space size="large">
+                                <Checkbox checked={showDevice1} onChange={(e) => setShowDevice1(e.target.checked)}>
+                                    <span style={{ fontFamily: 'Kanit, sans-serif', fontWeight: 'bold', color: '#1677ff' }}>{t.learningBuilding}</span>
+                                </Checkbox>
+                                <Checkbox checked={showDevice2} onChange={(e) => setShowDevice2(e.target.checked)}>
+                                    <span style={{ fontFamily: 'Kanit, sans-serif', fontWeight: 'bold', color: '#fa8c16' }}>{t.library}</span>
+                                </Checkbox>
+                            </Space>
+                        </Card>
+                    </div>
+
                     <Row gutter={[16, 16]}>
                         <Col xs={{ span: 24, order: 2 }} lg={{ span: 12, order: 1 }}>
                             <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.trend}</span>} style={{ borderRadius: '15px' }}>
                                 <div style={{ width: '100%', height: 300 }}>
                                     <ResponsiveContainer>
                                         <LineChart data={timeSeriesData}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="time" style={{ fontFamily: 'Kanit, sans-serif' }} />
-                                            <YAxis label={{ value: 'µg/m³', angle: -90, position: 'insideLeft' }} />
+                                            <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.4} vertical={false} />
+                                            <XAxis dataKey="time" style={{ fontFamily: 'Kanit, sans-serif' }} axisLine={false} tickLine={false} />
+                                            <YAxis label={{ value: 'µg/m³', angle: -90, position: 'insideLeft' }} axisLine={false} tickLine={false} />
                                             <Tooltip
-                                                contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit' }}
+                                                contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                                 labelStyle={{ fontWeight: 'bold' }}
                                             />
                                             <Legend wrapperStyle={{ fontFamily: 'Kanit, sans-serif' }} />
-                                            <Line type="monotone" dataKey="pm25_A" name={t.learningBuilding} stroke="#1890ff" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
-                                            <Line type="monotone" dataKey="pm25_B" name={t.library} stroke="#ff4d4f" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                                            {showDevice1 && <Line type="monotone" dataKey="pm25_A" name={t.learningBuilding} stroke="#1677ff" strokeWidth={3} dot={false} activeDot={{ r: 8, strokeWidth: 0 }} />}
+                                            {showDevice2 && <Line type="monotone" dataKey="pm25_B" name={t.library} stroke="#fa8c16" strokeWidth={3} dot={false} activeDot={{ r: 8, strokeWidth: 0 }} />}
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -382,16 +398,16 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                                 <div style={{ width: '100%', height: 300 }}>
                                     <ResponsiveContainer>
                                         <ComposedChart data={timeSeriesData}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="time" style={{ fontFamily: 'Kanit, sans-serif' }} />
-                                            <YAxis yAxisId="left" orientation="left" stroke="#ff7a45" label={{ value: 'Temp (°C)', angle: -90, position: 'insideLeft' }} />
-                                            <YAxis yAxisId="right" orientation="right" stroke="#36cfc9" label={{ value: 'Humidity (%)', angle: 90, position: 'insideRight' }} />
-                                            <Tooltip contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit' }} labelStyle={{ fontWeight: 'bold' }} />
+                                            <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.4} vertical={false} />
+                                            <XAxis dataKey="time" style={{ fontFamily: 'Kanit, sans-serif' }} axisLine={false} tickLine={false} />
+                                            <YAxis yAxisId="left" orientation="left" stroke="#f5222d" label={{ value: 'Temp (°C)', angle: -90, position: 'insideLeft' }} axisLine={false} tickLine={false} />
+                                            <YAxis yAxisId="right" orientation="right" stroke="#13c2c2" label={{ value: 'Humidity (%)', angle: 90, position: 'insideRight' }} axisLine={false} tickLine={false} />
+                                            <Tooltip contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} labelStyle={{ fontWeight: 'bold' }} />
                                             <Legend wrapperStyle={{ fontFamily: 'Kanit, sans-serif' }} />
-                                            <Line yAxisId="left" type="monotone" dataKey="temp_A" name={`Temp (${t.learningBuilding})`} stroke="#ff7a45" dot={false} strokeWidth={2} />
-                                            <Line yAxisId="right" type="monotone" dataKey="humid_A" name={`Humid (${t.learningBuilding})`} stroke="#36cfc9" dot={false} strokeWidth={2} />
-                                            <Line yAxisId="left" type="monotone" dataKey="temp_B" name={`Temp (${t.library})`} stroke="#ff9c6e" dot={false} strokeWidth={2} strokeDasharray="5 5" />
-                                            <Line yAxisId="right" type="monotone" dataKey="humid_B" name={`Humid (${t.library})`} stroke="#5cdbd3" dot={false} strokeWidth={2} strokeDasharray="5 5" />
+                                            {showDevice1 && <Line yAxisId="left" type="monotone" dataKey="temp_A" name={`Temp (${t.learningBuilding})`} stroke="#f5222d" dot={false} strokeWidth={3} />}
+                                            {showDevice1 && <Line yAxisId="right" type="monotone" dataKey="humid_A" name={`Humid (${t.learningBuilding})`} stroke="#13c2c2" dot={false} strokeWidth={3} />}
+                                            {showDevice2 && <Line yAxisId="left" type="monotone" dataKey="temp_B" name={`Temp (${t.library})`} stroke="#ff7875" dot={false} strokeWidth={3} strokeDasharray="7 7" />}
+                                            {showDevice2 && <Line yAxisId="right" type="monotone" dataKey="humid_B" name={`Humid (${t.library})`} stroke="#87e8e8" dot={false} strokeWidth={3} strokeDasharray="7 7" />}
                                         </ComposedChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -403,13 +419,13 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                                 <div style={{ width: '100%', height: 300 }}>
                                     <ResponsiveContainer>
                                         <LineChart data={timeSeriesData}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="time" style={{ fontFamily: 'Kanit, sans-serif' }} />
-                                            <YAxis stroke="#52c41a" label={{ value: 'PM10 (µg/m³)', angle: -90, position: 'insideLeft' }} />
-                                            <Tooltip contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit' }} labelStyle={{ fontWeight: 'bold' }} />
+                                            <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.4} vertical={false} />
+                                            <XAxis dataKey="time" style={{ fontFamily: 'Kanit, sans-serif' }} axisLine={false} tickLine={false} />
+                                            <YAxis stroke="#52c41a" label={{ value: 'PM10 (µg/m³)', angle: -90, position: 'insideLeft' }} axisLine={false} tickLine={false} />
+                                            <Tooltip contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} labelStyle={{ fontWeight: 'bold' }} />
                                             <Legend wrapperStyle={{ fontFamily: 'Kanit, sans-serif' }} />
-                                            <Line type="monotone" dataKey="pm10_A" name={`PM10 (${t.learningBuilding})`} stroke="#52c41a" dot={false} strokeWidth={2} />
-                                            <Line type="monotone" dataKey="pm10_B" name={`PM10 (${t.library})`} stroke="#95de64" dot={false} strokeWidth={2} strokeDasharray="5 5" />
+                                            {showDevice1 && <Line type="monotone" dataKey="pm10_A" name={`PM10 (${t.learningBuilding})`} stroke="#52c41a" dot={false} activeDot={{ r: 8, strokeWidth: 0 }} strokeWidth={3} />}
+                                            {showDevice2 && <Line type="monotone" dataKey="pm10_B" name={`PM10 (${t.library})`} stroke="#b7eb8f" dot={false} activeDot={{ r: 8, strokeWidth: 0 }} strokeWidth={3} strokeDasharray="7 7" />}
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -441,21 +457,26 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                                         bottom: 5,
                                     }}
                                 >
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="date" style={{ fontFamily: 'Kanit, sans-serif' }} />
-                                    <YAxis label={{ value: 'PM2.5 (µg/m³)', angle: -90, position: 'insideLeft', style: { fontFamily: 'Kanit' } }} />
+                                    <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.4} vertical={false} />
+                                    <XAxis dataKey="date" style={{ fontFamily: 'Kanit, sans-serif' }} axisLine={false} tickLine={false} />
+                                    <YAxis label={{ value: 'PM2.5 (µg/m³)', angle: -90, position: 'insideLeft', style: { fontFamily: 'Kanit' } }} axisLine={false} tickLine={false} />
                                     <Tooltip
-                                        contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit' }}
+                                        contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                         formatter={(value, name) => [value, name]}
                                         labelStyle={{ fontWeight: 'bold' }}
+                                        cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                                     />
                                     <Legend wrapperStyle={{ fontFamily: 'Kanit, sans-serif' }} />
-                                    <Bar dataKey="pm25_A" name={t.learningBuilding} fill="#1890ff" radius={[5, 5, 0, 0]}>
-                                        <LabelList dataKey="pm25_A" position="top" style={{ fontFamily: 'Kanit, sans-serif' }} />
-                                    </Bar>
-                                    <Bar dataKey="pm25_B" name={t.library} fill="#52c41a" radius={[5, 5, 0, 0]}>
-                                        <LabelList dataKey="pm25_B" position="top" style={{ fontFamily: 'Kanit, sans-serif' }} />
-                                    </Bar>
+                                    {showDevice1 && (
+                                        <Bar dataKey="pm25_A" name={t.learningBuilding} fill="#1677ff" radius={[10, 10, 0, 0]} maxBarSize={40}>
+                                            <LabelList dataKey="pm25_A" position="top" style={{ fontFamily: 'Kanit, sans-serif', fontSize: 12, fill: '#8c8c8c' }} />
+                                        </Bar>
+                                    )}
+                                    {showDevice2 && (
+                                        <Bar dataKey="pm25_B" name={t.library} fill="#fa8c16" radius={[10, 10, 0, 0]} maxBarSize={40}>
+                                            <LabelList dataKey="pm25_B" position="top" style={{ fontFamily: 'Kanit, sans-serif', fontSize: 12, fill: '#8c8c8c' }} />
+                                        </Bar>
+                                    )}
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
