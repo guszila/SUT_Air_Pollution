@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Card, Input, Button } from 'antd';
-import { DownloadOutlined } from '@ant-design/icons';
+import { Table, Card, Input, Button, Dropdown, message } from 'antd';
+import { DownloadOutlined, DownOutlined } from '@ant-design/icons';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -109,17 +109,29 @@ const TableView = ({ data }) => {
             const deviceName = item.deviceId === 'ESP32_01' ? `ESP32_01 (${t.library})` :
                 item.deviceId === 'ESP32_02' ? `ESP32_02 (${t.learningBuilding})` :
                     item.deviceId;
-            return deviceName?.toLowerCase().includes(lowerSearchText);
+            
+            const matchDevice = deviceName?.toLowerCase().includes(lowerSearchText);
+            const matchDate = item.date?.toLowerCase().includes(lowerSearchText);
+            
+            return matchDevice || matchDate;
         });
     }, [data, searchText, t]);
 
-    const downloadCSV = () => {
-        if (!filteredData || filteredData.length === 0) return;
+    const downloadCSV = (deviceId) => {
+        let exportData = filteredData;
+        if (deviceId !== 'all') {
+             exportData = filteredData.filter(item => item.deviceId === deviceId);
+        }
+
+        if (!exportData || exportData.length === 0) {
+            message.warning(t.language === 'en' ? 'No data to download' : 'ไม่มีข้อมูลสำหรับดาวน์โหลด');
+            return;
+        }
 
         // Header mapping
         const headers = [t.date || "Date", t.time || "Time", t.device || "Device", "PM2.5 (µg/m³)", "PM10 (µg/m³)", `${t.temperature || "Temperature"} (°C)`, `${t.humidity || "Humidity"} (%)`];
 
-        const csvRows = filteredData.map(row => {
+        const csvRows = exportData.map(row => {
             const deviceName = row.deviceId === 'ESP32_01' ? `ESP32_01 (${t.library || 'Library'})` :
                 row.deviceId === 'ESP32_02' ? `ESP32_02 (${t.learningBuilding || 'Learning Bldg'})` :
                     row.deviceId;
@@ -140,10 +152,30 @@ const TableView = ({ data }) => {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.setAttribute("download", `air_quality_data_${new Date().getTime()}.csv`);
+        const fileNameSuffix = deviceId === 'all' ? 'all' : deviceId;
+        link.setAttribute("download", `air_quality_${fileNameSuffix}_${new Date().getTime()}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    };
+
+    const downloadItems = [
+        {
+            key: 'all',
+            label: t.language === 'en' ? 'All Devices' : 'ทุกอุปกรณ์',
+        },
+        {
+            key: 'ESP32_01',
+            label: `ESP32_01 (${t.library || 'Library'})`,
+        },
+        {
+            key: 'ESP32_02',
+            label: `ESP32_02 (${t.learningBuilding || 'Learning Bldg'})`,
+        },
+    ];
+
+    const handleMenuClick = (e) => {
+        downloadCSV(e.key);
     };
 
     return (
@@ -152,23 +184,24 @@ const TableView = ({ data }) => {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
                     <span>{t.table}</span>
                     <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <Button
-                            type="primary"
-                            icon={<DownloadOutlined />}
-                            onClick={downloadCSV}
-                            style={{
-                                backgroundColor: isDarkMode ? '#177ddc' : '#f97316',
-                                fontFamily: 'Kanit, sans-serif'
-                            }}
-                        >
-                            {t.language === 'en' ? "Download CSV" : "ดาวน์โหลดข้อมูล (CSV)"}
-                        </Button>
+                        <Dropdown menu={{ items: downloadItems, onClick: handleMenuClick }} placement="bottomRight">
+                            <Button
+                                type="primary"
+                                icon={<DownloadOutlined />}
+                                style={{
+                                    backgroundColor: isDarkMode ? '#177ddc' : '#f97316',
+                                    fontFamily: 'Kanit, sans-serif'
+                                }}
+                            >
+                                {t.language === 'en' ? "Download CSV" : "ดาวน์โหลดข้อมูล (CSV)"} <DownOutlined />
+                            </Button>
+                        </Dropdown>
                         <Input.Search
-                            placeholder={t.language === 'en' ? "Search device name..." : "ค้นหาชื่ออุปกรณ์..."}
+                            placeholder={t.language === 'en' ? "Search device name or date..." : "ค้นหาชื่ออุปกรณ์ หรือ วัน/เดือน/ปี..."}
                             allowClear
                             onChange={(e) => setSearchText(e.target.value)}
                             onSearch={(value) => setSearchText(value)}
-                            style={{ width: 250 }}
+                            style={{ width: 300 }}
                         />
                     </div>
                 </div>
