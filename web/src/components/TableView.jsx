@@ -136,7 +136,7 @@ const TableView = ({ data }) => {
                 row.deviceId === 'ESP32_02' ? `ESP32_02 (${t.learningBuilding || 'Learning Bldg'})` :
                     row.deviceId;
             return [
-                row.date,
+                '\u200C' + row.date,
                 row.time,
                 deviceName,
                 row.pm25,
@@ -210,11 +210,22 @@ const TableView = ({ data }) => {
             bodyStyle={{ padding: '0' }}
         >
             <style>{`
-                .latest-row {
-                    background-color: ${isDarkMode ? '#2d4d18' : '#f6ffed'};
+                @keyframes pulseLight {
+                    0% { background-color: #f6ffed; }
+                    50% { background-color: #d9f7be; }
+                    100% { background-color: #f6ffed; }
+                }
+                @keyframes pulseDark {
+                    0% { background-color: #2d4d18; }
+                    50% { background-color: #38601d; }
+                    100% { background-color: #2d4d18; }
+                }
+                .latest-row > td {
+                    animation: ${isDarkMode ? 'pulseDark' : 'pulseLight'} 3s infinite ease-in-out;
                 }
                 .latest-row:hover > td {
                     background-color: ${isDarkMode ? '#38601d !important' : '#d9f7be !important'};
+                    animation: none;
                 }
             `}</style>
             <Table

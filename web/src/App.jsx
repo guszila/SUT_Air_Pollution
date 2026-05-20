@@ -207,7 +207,7 @@ const AirDashboard = () => {
       const latestD1 = d1Data.length > 0 ? d1Data[d1Data.length - 1] : null;
       const latestD2 = d2Data.length > 0 ? d2Data[d2Data.length - 1] : null;
 
-      // Helper to check if device is offline (older than 20 mins)
+      // Helper to check if device is offline (older than 5 mins)
       const isDeviceOffline = (device) => {
         if (!device) return true;
         try {
@@ -216,7 +216,7 @@ const AirDashboard = () => {
           const deviceDate = new Date(y, m - 1, d, h, min, s);
           const now = new Date();
           const diff = now - deviceDate;
-          return diff > 20 * 60 * 1000; // 20 minutes
+          return diff > 5 * 60 * 1000; // 5 minutes
         } catch (e) {
           return true;
         }
@@ -355,7 +355,7 @@ const AirDashboard = () => {
               <AirMap device1={device1} device2={device2} dailyStats={dailyStats} />
             </div>
             <div id="data-table-section">
-              <Text strong style={{ fontSize: '20px', fontFamily: 'Kanit, sans-serif' }}>
+              <Text style={{ fontSize: '20px', fontWeight: 500, fontFamily: 'Kanit, sans-serif' }}>
                 {t.table || "Data Table"}
               </Text>
               <TableView data={historyData} />
@@ -450,7 +450,7 @@ const AirDashboard = () => {
             <Button 
               type="text" 
               onClick={() => setLanguage(language === 'th' ? 'en' : 'th')} 
-              style={{ color: 'white', fontWeight: 'bold', marginRight: '8px' }}
+              style={{ color: 'white', fontWeight: 500, marginRight: '8px' }}
             >
               {language === 'th' ? 'EN' : 'TH'}
             </Button>
@@ -489,9 +489,9 @@ const AirDashboard = () => {
                   <Space>
                     <CheckCircleOutlined style={{ fontSize: '24px', color: '#52c41a' }} />
                     <div>
-                      <Text strong style={{ fontSize: '16px', fontFamily: 'Kanit, sans-serif' }}>{t.summary}</Text>
+                      <Text style={{ fontSize: '16px', fontWeight: 500, fontFamily: 'Kanit, sans-serif' }}>{t.summary}</Text>
                       <div style={{ fontFamily: 'Kanit, sans-serif', color: '#52c41a' }}>
-                        {t.bestAir}: <b>{t[bestLocation.name]}</b> (PM2.5: {bestLocation.value})
+                        {t.bestAir}: <span style={{ fontWeight: 500 }}>{t[bestLocation.name]}</span> (PM2.5: {bestLocation.value})
                       </div>
                     </div>
                   </Space>

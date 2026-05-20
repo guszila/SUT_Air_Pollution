@@ -98,26 +98,26 @@ const StatusSection = ({ title, data, onClick }) => {
                             strokeWidth={10}
                             format={() => (
                                 <div style={{ color: currentStatus.color, fontFamily: 'Kanit, sans-serif' }}>
-                                    <div style={{ fontSize: '20px', fontWeight: 'bold' }}>{displayPM25 !== undefined ? displayPM25 : '-'}</div>
+                                    <div style={{ fontSize: '20px', fontWeight: 500 }}>{displayPM25 !== undefined ? displayPM25 : '-'}</div>
                                     <div style={{ fontSize: '10px' }}>µg/m³</div>
                                 </div>
                             )}
                         />
                         <div style={{ marginTop: '5px' }}>
-                            <Text strong style={{ fontSize: '14px', color: currentStatus.color, fontFamily: 'Kanit, sans-serif' }}>
+                            <Text style={{ fontSize: '14px', fontWeight: 500, color: currentStatus.color, fontFamily: 'Kanit, sans-serif' }}>
                                 {currentStatus.text}
                             </Text>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '10px' }}>
                             <div>
                                 <div style={{ fontSize: '11px', color: '#8c8c8c', fontFamily: 'Kanit, sans-serif' }}>{t.avg1h}</div>
-                                <div style={{ fontSize: '14px', fontWeight: 'bold', color: getStatus(pm25_hourly_avg).color, fontFamily: 'Kanit, sans-serif' }}>
+                                <div style={{ fontSize: '14px', fontWeight: 500, color: getStatus(pm25_hourly_avg).color, fontFamily: 'Kanit, sans-serif' }}>
                                     {pm25_hourly_avg !== undefined ? pm25_hourly_avg : '-'}
                                 </div>
                             </div>
                             <div>
                                 <div style={{ fontSize: '11px', color: '#8c8c8c', fontFamily: 'Kanit, sans-serif' }}>{t.avg24h}</div>
-                                <div style={{ fontSize: '14px', fontWeight: 'bold', color: getStatus(pm25_daily_avg).color, fontFamily: 'Kanit, sans-serif' }}>
+                                <div style={{ fontSize: '14px', fontWeight: 500, color: getStatus(pm25_daily_avg).color, fontFamily: 'Kanit, sans-serif' }}>
                                     {pm25_daily_avg !== undefined ? pm25_daily_avg : '-'}
                                 </div>
                             </div>
@@ -190,16 +190,16 @@ const HeroGauge = ({ pm25, temp }) => {
                         color: status.color,
                         fontFamily: 'Kanit, sans-serif'
                     }}>
-                        <div style={{ fontSize: '48px', fontWeight: 'bold', lineHeight: '1' }}>{pm25 || '-'}</div>
+                        <div style={{ fontSize: '48px', fontWeight: 500, lineHeight: '1' }}>{pm25 || '-'}</div>
                         <div style={{ fontSize: '16px', color: '#8c8c8c' }}>µg/m³</div>
-                        <div style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '5px' }}>{status.text}</div>
+                        <div style={{ fontSize: '18px', fontWeight: 500, marginTop: '5px' }}>{status.text}</div>
                     </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px', backgroundColor: '#f5f5f5', padding: '10px 20px', borderRadius: '50px' }}>
                     <FireFilled style={{ color: '#ff4d4f', fontSize: '20px', marginRight: '10px' }} />
                     <Text style={{ fontSize: '18px', fontFamily: 'Kanit, sans-serif' }}>
-                        {t.temperature}: <b>{temp || '-'} °C</b>
+                        {t.temperature}: <span style={{ fontWeight: 500 }}>{temp || '-'} °C</span>
                     </Text>
                 </div>
             </div>
@@ -242,7 +242,7 @@ const RankingTable = ({ device1, device2 }) => {
             title: <span>PM2.5 <br /><small>(avg 1h)</small></span>,
             dataIndex: 'pm25',
             align: 'center',
-            render: (val) => <span style={{ fontWeight: 'bold' }}>{val}</span>
+            render: (val) => <span style={{ fontWeight: 500 }}>{val}</span>
         },
         { title: 'PM10', dataIndex: 'pm10', align: 'center', render: (val) => val !== '-' ? val : '-' },
         { title: 'Temp (°C)', dataIndex: 'temp', align: 'center', render: (val) => val !== '-' ? val : '-' },
@@ -272,7 +272,7 @@ const AirQualityReferenceTable = () => {
     ];
 
     const columns = [
-        { title: 'AQI', dataIndex: 'aqi', align: 'center', width: 80, render: (text) => <span style={{ fontWeight: 'bold' }}>{text}</span> },
+        { title: 'AQI', dataIndex: 'aqi', align: 'center', width: 80, render: (text) => <span style={{ fontWeight: 500 }}>{text}</span> },
         { title: 'PM2.5 (µg/m³)', dataIndex: 'pm25', align: 'center', width: 120 },
         { title: t.status, dataIndex: 'meaning', align: 'left' },
     ];
@@ -397,7 +397,7 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                                                     <Tooltip 
                                                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', fontFamily: 'Kanit' }}
                                                     />
-                                                    <Area type="monotone" dataKey={pmKey} name="PM2.5" stroke={deviceColor} strokeWidth={3} fillOpacity={1} fill={`url(#colorPv_${modalDeviceFilter})`} />
+                                                    <Area type="monotone" dataKey={pmKey} name="PM2.5" stroke={deviceColor} strokeWidth={3} fillOpacity={1} fill={`url(#colorPv_${modalDeviceFilter})`} connectNulls={true} />
                                                 </AreaChart>
                                             </ResponsiveContainer>
                                         </div>
@@ -416,10 +416,10 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                         <Card size="small" style={{ borderRadius: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
                             <Space size="large">
                                 <Checkbox checked={showDevice1} onChange={(e) => setShowDevice1(e.target.checked)}>
-                                    <span style={{ fontFamily: 'Kanit, sans-serif', fontWeight: 'bold', color: '#1677ff' }}>{t.learningBuilding}</span>
+                                    <span style={{ fontFamily: 'Kanit, sans-serif', fontWeight: 500, color: '#1677ff' }}>{t.learningBuilding}</span>
                                 </Checkbox>
                                 <Checkbox checked={showDevice2} onChange={(e) => setShowDevice2(e.target.checked)}>
-                                    <span style={{ fontFamily: 'Kanit, sans-serif', fontWeight: 'bold', color: '#fa8c16' }}>{t.library}</span>
+                                    <span style={{ fontFamily: 'Kanit, sans-serif', fontWeight: 500, color: '#fa8c16' }}>{t.library}</span>
                                 </Checkbox>
                             </Space>
                         </Card>
@@ -437,11 +437,11 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                                             <YAxis label={{ value: 'µg/m³', angle: -90, position: 'insideLeft' }} axisLine={false} tickLine={false} />
                                             <Tooltip
                                                 contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                                labelStyle={{ fontWeight: 'bold' }}
+                                                labelStyle={{ fontWeight: 500 }}
                                             />
                                             <Legend wrapperStyle={{ fontFamily: 'Kanit, sans-serif' }} />
-                                            {showDevice1 && <Line type="monotone" dataKey="pm25_A" name={t.learningBuilding} stroke="#1677ff" strokeWidth={3} dot={false} activeDot={{ r: 8, strokeWidth: 0 }} />}
-                                            {showDevice2 && <Line type="monotone" dataKey="pm25_B" name={t.library} stroke="#fa8c16" strokeWidth={3} dot={false} activeDot={{ r: 8, strokeWidth: 0 }} />}
+                                            {showDevice1 && <Line type="monotone" dataKey="pm25_A" name={t.learningBuilding} stroke="#1677ff" strokeWidth={3} dot={false} activeDot={{ r: 8, strokeWidth: 0 }} connectNulls={true} />}
+                                            {showDevice2 && <Line type="monotone" dataKey="pm25_B" name={t.library} stroke="#fa8c16" strokeWidth={3} dot={false} activeDot={{ r: 8, strokeWidth: 0 }} connectNulls={true} />}
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -453,7 +453,7 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                             <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.summary || "System Summary"}</span>} style={{ borderRadius: '15px', height: '100%' }}>
                                 <div style={{ textAlign: 'center', padding: '20px 0', display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%' }}>
                                     <div style={{ fontFamily: 'Kanit, sans-serif' }}>
-                                        <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#1890ff', lineHeight: 1 }}>
+                                        <div style={{ fontSize: '48px', fontWeight: 500, color: '#1890ff', lineHeight: 1 }}>
                                             {currentTime ? currentTime.toLocaleTimeString('th-TH', { hour12: false }) : '--:--:--'}
                                         </div>
                                         <div style={{ fontSize: '18px', color: '#8c8c8c', marginBottom: '20px' }}>
@@ -466,7 +466,7 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                                             <div style={{ fontSize: '16px', marginBottom: '5px' }}>{t.bestAir}</div>
                                             {bestLocation ? (
                                                 <>
-                                                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#52c41a' }}>
+                                                    <div style={{ fontSize: '24px', fontWeight: 500, color: '#52c41a' }}>
                                                         {t[bestLocation.name]}
                                                     </div>
                                                     <Tag color="success" style={{ marginTop: '5px' }}>
@@ -498,10 +498,10 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                                             <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.4} vertical={false} />
                                             <XAxis dataKey="time" style={{ fontFamily: 'Kanit, sans-serif' }} axisLine={false} tickLine={false} />
                                             <YAxis label={{ value: 'Temp (°C)', angle: -90, position: 'insideLeft' }} axisLine={false} tickLine={false} />
-                                            <Tooltip contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} labelStyle={{ fontWeight: 'bold' }} />
+                                            <Tooltip contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} labelStyle={{ fontWeight: 500 }} />
                                             <Legend wrapperStyle={{ fontFamily: 'Kanit, sans-serif' }} />
-                                            {showDevice1 && <Line type="monotone" dataKey="temp_A" name={`Temp (${t.learningBuilding})`} stroke="#f5222d" dot={false} strokeWidth={3} />}
-                                            {showDevice2 && <Line type="monotone" dataKey="temp_B" name={`Temp (${t.library})`} stroke="#fa8c16" dot={false} strokeWidth={3} />}
+                                            {showDevice1 && <Line type="monotone" dataKey="temp_A" name={`Temp (${t.learningBuilding})`} stroke="#f5222d" dot={false} strokeWidth={3} connectNulls={true} />}
+                                            {showDevice2 && <Line type="monotone" dataKey="temp_B" name={`Temp (${t.library})`} stroke="#fa8c16" dot={false} strokeWidth={3} connectNulls={true} />}
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -516,10 +516,10 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                                             <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.4} vertical={false} />
                                             <XAxis dataKey="time" style={{ fontFamily: 'Kanit, sans-serif' }} axisLine={false} tickLine={false} />
                                             <YAxis label={{ value: 'Humidity (%)', angle: -90, position: 'insideLeft' }} axisLine={false} tickLine={false} />
-                                            <Tooltip contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} labelStyle={{ fontWeight: 'bold' }} />
+                                            <Tooltip contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} labelStyle={{ fontWeight: 500 }} />
                                             <Legend wrapperStyle={{ fontFamily: 'Kanit, sans-serif' }} />
-                                            {showDevice1 && <Line type="monotone" dataKey="humid_A" name={`Humid (${t.learningBuilding})`} stroke="#1677ff" dot={false} strokeWidth={3} />}
-                                            {showDevice2 && <Line type="monotone" dataKey="humid_B" name={`Humid (${t.library})`} stroke="#13c2c2" dot={false} strokeWidth={3} />}
+                                            {showDevice1 && <Line type="monotone" dataKey="humid_A" name={`Humid (${t.learningBuilding})`} stroke="#1677ff" dot={false} strokeWidth={3} connectNulls={true} />}
+                                            {showDevice2 && <Line type="monotone" dataKey="humid_B" name={`Humid (${t.library})`} stroke="#13c2c2" dot={false} strokeWidth={3} connectNulls={true} />}
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -534,10 +534,10 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                                             <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.4} vertical={false} />
                                             <XAxis dataKey="time" style={{ fontFamily: 'Kanit, sans-serif' }} axisLine={false} tickLine={false} />
                                             <YAxis label={{ value: 'PM10 (µg/m³)', angle: -90, position: 'insideLeft' }} axisLine={false} tickLine={false} />
-                                            <Tooltip contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} labelStyle={{ fontWeight: 'bold' }} />
+                                            <Tooltip contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} labelStyle={{ fontWeight: 500 }} />
                                             <Legend wrapperStyle={{ fontFamily: 'Kanit, sans-serif' }} />
-                                            {showDevice1 && <Line type="monotone" dataKey="pm10_A" name={`PM10 (${t.learningBuilding})`} stroke="#1677ff" dot={false} activeDot={{ r: 8, strokeWidth: 0 }} strokeWidth={3} />}
-                                            {showDevice2 && <Line type="monotone" dataKey="pm10_B" name={`PM10 (${t.library})`} stroke="#fa8c16" dot={false} activeDot={{ r: 8, strokeWidth: 0 }} strokeWidth={3} />}
+                                            {showDevice1 && <Line type="monotone" dataKey="pm10_A" name={`PM10 (${t.learningBuilding})`} stroke="#1677ff" dot={false} activeDot={{ r: 8, strokeWidth: 0 }} strokeWidth={3} connectNulls={true} />}
+                                            {showDevice2 && <Line type="monotone" dataKey="pm10_B" name={`PM10 (${t.library})`} stroke="#fa8c16" dot={false} activeDot={{ r: 8, strokeWidth: 0 }} strokeWidth={3} connectNulls={true} />}
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -575,7 +575,7 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                                     <Tooltip
                                         contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                         formatter={(value, name) => [value, name]}
-                                        labelStyle={{ fontWeight: 'bold' }}
+                                        labelStyle={{ fontWeight: 500 }}
                                         cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                                     />
                                     <Legend wrapperStyle={{ fontFamily: 'Kanit, sans-serif' }} />
