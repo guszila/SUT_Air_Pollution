@@ -237,43 +237,73 @@ const AirDashboard = () => {
       setDevice1(latestD1);
       setDevice2(latestD2);
 
-      // --- Process Time Series Data (Merge by Time) ---
-      const timeMap = {};
+      // --- Process Time Series Data (Hourly Average) ---
+      const hourlyMap = {};
 
-      const addToMap = (data, key) => {
+      const addToHourlyMap = (data, key) => {
         data.forEach(item => {
           const dateParts = item.date.split('/');
           const timeParts = item.time.split(':');
           if (dateParts.length === 3 && timeParts.length >= 2) {
-            const d = new Date(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}T${item.time}`);
-            const timestamp = d.getTime();
-            const timeLabel = `${timeParts[0]}:${timeParts[1]}`; // HH:mm
+            const hourKey = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}T${timeParts[0]}:00:00`;
+            const timestamp = new Date(hourKey).getTime();
+            const timeLabel = `${timeParts[0]}:00`; // HH:00
 
-            if (!timeMap[timestamp]) {
-              timeMap[timestamp] = { timestamp, time: timeLabel, fullDate: item.date };
+            if (!hourlyMap[timestamp]) {
+              hourlyMap[timestamp] = { 
+                  timestamp, 
+                  time: timeLabel, 
+                  fullDate: item.date,
+                  sumPM25_A: 0, countPM25_A: 0,
+                  sumPM10_A: 0, countPM10_A: 0,
+                  sumTemp_A: 0, countTemp_A: 0,
+                  sumHumid_A: 0, countHumid_A: 0,
+                  sumPM25_B: 0, countPM25_B: 0,
+                  sumPM10_B: 0, countPM10_B: 0,
+                  sumTemp_B: 0, countTemp_B: 0,
+                  sumHumid_B: 0, countHumid_B: 0,
+              };
             }
             if (key === 'A') {
-              timeMap[timestamp].pm25_A = item.pm25;
-              timeMap[timestamp].pm10_A = item.pm10;
-              timeMap[timestamp].temp_A = item.temp;
-              timeMap[timestamp].humid_A = item.humidity;
+              hourlyMap[timestamp].sumPM25_A += item.pm25; hourlyMap[timestamp].countPM25_A++;
+              hourlyMap[timestamp].sumPM10_A += item.pm10; hourlyMap[timestamp].countPM10_A++;
+              hourlyMap[timestamp].sumTemp_A += item.temp; hourlyMap[timestamp].countTemp_A++;
+              hourlyMap[timestamp].sumHumid_A += item.humidity; hourlyMap[timestamp].countHumid_A++;
             }
             if (key === 'B') {
-              timeMap[timestamp].pm25_B = item.pm25;
-              timeMap[timestamp].pm10_B = item.pm10;
-              timeMap[timestamp].temp_B = item.temp;
-              timeMap[timestamp].humid_B = item.humidity;
+              hourlyMap[timestamp].sumPM25_B += item.pm25; hourlyMap[timestamp].countPM25_B++;
+              hourlyMap[timestamp].sumPM10_B += item.pm10; hourlyMap[timestamp].countPM10_B++;
+              hourlyMap[timestamp].sumTemp_B += item.temp; hourlyMap[timestamp].countTemp_B++;
+              hourlyMap[timestamp].sumHumid_B += item.humidity; hourlyMap[timestamp].countHumid_B++;
             }
           }
         });
       };
 
-      addToMap(d1Data, 'A');
-      addToMap(d2Data, 'B');
+      addToHourlyMap(d1Data, 'A');
+      addToHourlyMap(d2Data, 'B');
 
-      const sortedTimeSeries = Object.values(timeMap)
+      const sortedTimeSeries = Object.values(hourlyMap)
         .sort((a, b) => a.timestamp - b.timestamp)
-        .slice(-50); // Keep last 50 points
+        .map(entry => {
+            const result = {
+                timestamp: entry.timestamp,
+                time: entry.time,
+                fullDate: entry.fullDate
+            };
+            if (entry.countPM25_A > 0) result.pm25_A = parseFloat((entry.sumPM25_A / entry.countPM25_A).toFixed(1));
+            if (entry.countPM10_A > 0) result.pm10_A = parseFloat((entry.sumPM10_A / entry.countPM10_A).toFixed(1));
+            if (entry.countTemp_A > 0) result.temp_A = parseFloat((entry.sumTemp_A / entry.countTemp_A).toFixed(1));
+            if (entry.countHumid_A > 0) result.humid_A = parseFloat((entry.sumHumid_A / entry.countHumid_A).toFixed(1));
+
+            if (entry.countPM25_B > 0) result.pm25_B = parseFloat((entry.sumPM25_B / entry.countPM25_B).toFixed(1));
+            if (entry.countPM10_B > 0) result.pm10_B = parseFloat((entry.sumPM10_B / entry.countPM10_B).toFixed(1));
+            if (entry.countTemp_B > 0) result.temp_B = parseFloat((entry.sumTemp_B / entry.countTemp_B).toFixed(1));
+            if (entry.countHumid_B > 0) result.humid_B = parseFloat((entry.sumHumid_B / entry.countHumid_B).toFixed(1));
+
+            return result;
+        })
+        .slice(-24); // Keep last 24 hours
 
       setTimeSeriesData(sortedTimeSeries);
 

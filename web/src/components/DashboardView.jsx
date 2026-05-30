@@ -313,6 +313,14 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [modalDeviceFilter, setModalDeviceFilter] = useState('device1');
 
+    const [selectedGraph, setSelectedGraph] = useState(null);
+    const [isGraphModalVisible, setIsGraphModalVisible] = useState(false);
+
+    const openGraphModal = (graphType) => {
+        setSelectedGraph(graphType);
+        setIsGraphModalVisible(true);
+    };
+
     const handleCardClick = (device) => {
         setModalDeviceFilter(device);
         setIsModalVisible(true);
@@ -428,7 +436,7 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
 
                     <Row gutter={[16, 16]}>
                         <Col xs={{ span: 24, order: 2 }} lg={{ span: isModalMode ? 24 : 12, order: 1 }}>
-                            <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.trend}</span>} style={{ borderRadius: '15px' }}>
+                            <Card hoverable onClick={() => openGraphModal('trend')} title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>{t.trend}</span>} style={{ borderRadius: '15px' }}>
                                 <div style={{ width: '100%', height: 300 }}>
                                     <ResponsiveContainer>
                                         <LineChart data={timeSeriesData}>
@@ -491,7 +499,7 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
 
 
                         <Col xs={24} lg={12}>
-                            <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>Temperature Trends</span>} style={{ borderRadius: '15px' }}>
+                            <Card hoverable onClick={() => openGraphModal('temp')} title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>Temperature Trends</span>} style={{ borderRadius: '15px' }}>
                                 <div style={{ width: '100%', height: 300 }}>
                                     <ResponsiveContainer>
                                         <LineChart data={timeSeriesData}>
@@ -509,7 +517,7 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                         </Col>
 
                         <Col xs={24} lg={12}>
-                            <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>Humidity Trends</span>} style={{ borderRadius: '15px' }}>
+                            <Card hoverable onClick={() => openGraphModal('humid')} title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>Humidity Trends</span>} style={{ borderRadius: '15px' }}>
                                 <div style={{ width: '100%', height: 300 }}>
                                     <ResponsiveContainer>
                                         <LineChart data={timeSeriesData}>
@@ -527,7 +535,7 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                         </Col>
 
                         <Col xs={24} lg={24}>
-                            <Card title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>PM10 Trends</span>} style={{ borderRadius: '15px' }}>
+                            <Card hoverable onClick={() => openGraphModal('pm10')} title={<span style={{ fontFamily: 'Kanit, sans-serif' }}>PM10 Trends</span>} style={{ borderRadius: '15px' }}>
                                 <div style={{ width: '100%', height: 300 }}>
                                     <ResponsiveContainer>
                                         <LineChart data={timeSeriesData}>
@@ -593,6 +601,57 @@ const DashboardView = ({ device1, device2, historyData, dailyStats, timeSeriesDa
                             </ResponsiveContainer>
                         </div>
                     </Card>
+
+                    <Modal
+                        title={
+                            <span style={{ fontFamily: 'Kanit, sans-serif', fontSize: '1.2rem' }}>
+                                {selectedGraph === 'trend' ? t.trend :
+                                 selectedGraph === 'temp' ? 'Temperature Trends' :
+                                 selectedGraph === 'humid' ? 'Humidity Trends' :
+                                 selectedGraph === 'pm10' ? 'PM10 Trends' : ''}
+                            </span>
+                        }
+                        open={isGraphModalVisible}
+                        onCancel={() => setIsGraphModalVisible(false)}
+                        footer={null}
+                        width={900}
+                        centered
+                        bodyStyle={{ padding: '20px' }}
+                    >
+                        <div style={{ width: '100%', height: 450 }}>
+                            <ResponsiveContainer>
+                                <LineChart data={timeSeriesData} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
+                                    <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.4} vertical={false} />
+                                    <XAxis dataKey="time" style={{ fontFamily: 'Kanit, sans-serif' }} axisLine={false} tickLine={false} interval={0} angle={-45} textAnchor="end" />
+                                    <YAxis 
+                                        label={{ 
+                                            value: selectedGraph === 'temp' ? 'Temp (°C)' : 
+                                                   selectedGraph === 'humid' ? 'Humidity (%)' : 
+                                                   selectedGraph === 'pm10' ? 'PM10 (µg/m³)' : 'µg/m³', 
+                                            angle: -90, 
+                                            position: 'insideLeft' 
+                                        }} 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                    />
+                                    <Tooltip contentStyle={{ borderRadius: '10px', fontFamily: 'Kanit', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} labelStyle={{ fontWeight: 500 }} />
+                                    <Legend wrapperStyle={{ fontFamily: 'Kanit, sans-serif', bottom: 0 }} />
+                                    
+                                    {selectedGraph === 'trend' && showDevice1 && <Line type="monotone" dataKey="pm25_A" name={t.learningBuilding} stroke="#1677ff" strokeWidth={3} dot={false} activeDot={{ r: 8, strokeWidth: 0 }} connectNulls={true} />}
+                                    {selectedGraph === 'trend' && showDevice2 && <Line type="monotone" dataKey="pm25_B" name={t.library} stroke="#fa8c16" strokeWidth={3} dot={false} activeDot={{ r: 8, strokeWidth: 0 }} connectNulls={true} />}
+                                    
+                                    {selectedGraph === 'temp' && showDevice1 && <Line type="monotone" dataKey="temp_A" name={`Temp (${t.learningBuilding})`} stroke="#f5222d" dot={false} strokeWidth={3} connectNulls={true} />}
+                                    {selectedGraph === 'temp' && showDevice2 && <Line type="monotone" dataKey="temp_B" name={`Temp (${t.library})`} stroke="#fa8c16" dot={false} strokeWidth={3} connectNulls={true} />}
+                                    
+                                    {selectedGraph === 'humid' && showDevice1 && <Line type="monotone" dataKey="humid_A" name={`Humid (${t.learningBuilding})`} stroke="#1677ff" dot={false} strokeWidth={3} connectNulls={true} />}
+                                    {selectedGraph === 'humid' && showDevice2 && <Line type="monotone" dataKey="humid_B" name={`Humid (${t.library})`} stroke="#13c2c2" dot={false} strokeWidth={3} connectNulls={true} />}
+                                    
+                                    {selectedGraph === 'pm10' && showDevice1 && <Line type="monotone" dataKey="pm10_A" name={`PM10 (${t.learningBuilding})`} stroke="#1677ff" dot={false} strokeWidth={3} connectNulls={true} />}
+                                    {selectedGraph === 'pm10' && showDevice2 && <Line type="monotone" dataKey="pm10_B" name={`PM10 (${t.library})`} stroke="#fa8c16" dot={false} strokeWidth={3} connectNulls={true} />}
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </Modal>
                 </>
             )
             }
