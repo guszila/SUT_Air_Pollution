@@ -46,3 +46,43 @@ Air pollution is an invisible threat. This project bridges the gap between compl
    - Interactive geospatial heatmaps
    - Location-based air quality insights
    - Historical trend charts for analysis
+
+---
+
+## 🚀 Getting Started (วิธีติดตั้งและเริ่มต้นใช้งาน)
+
+Follow these steps to set up the project locally on your machine.
+
+### Prerequisites (สิ่งที่ต้องมี)
+* **Node.js** (v16 or higher recommended)
+* **npm** (comes with Node.js)
+* **Git** (optional, for cloning the repository)
+
+### Installation Steps (ขั้นตอนการติดตั้ง)
+
+1. **Clone the repository or download the files**
+   ```bash
+   git clone <https://github.com/guszila/SUT_Air_Pollution/tree/main/web>
+   ```
+   *(If you downloaded the ZIP file, simply extract it to your desired folder.)*
+
+2. **Navigate to the web directory**
+   The frontend application is located inside the `web` folder.
+   ```bash
+   cd web
+   ```
+
+3. **Install dependencies**
+   Install all required packages for the React application.
+   ```bash
+   npm install
+   ```
+
+4. **Start the development server**
+   Run the app in development mode.
+   ```bash
+   npm run dev
+   ```
+
+5. **Open in Browser**
+   Open your web browser and navigate to the local server address shown in your terminal (usually `http://localhost:5173`) to view the application.
